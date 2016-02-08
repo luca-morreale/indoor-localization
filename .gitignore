@@ -1,0 +1,4 @@
+/.build-tools.cson
+/**/.build-tools.cson
+/**/*.o
+/**/*.out
