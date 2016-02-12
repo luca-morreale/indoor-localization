@@ -41,6 +41,7 @@ for j=1:sensor_size
     plot(radius*cos(t)+beacons(j,1),radius*sin(t)+beacons(j,2),'--');
 end
 
+
 %% process covariance : velocity acceleration model
 % accel_noise_mag = .001; % process noise: the variability in how fast the target is speeding up
 %                           (stdv of acceleration: meters/sec^2)
@@ -105,7 +106,7 @@ end
 
 number_est = 1;
 dist_max = 0;
-time = 0;
+
 for t=1:dt:N    %increment t of dt (sampling_time)
     
     % if can not check at least 3 sensors than terminates!
@@ -115,10 +116,13 @@ for t=1:dt:N    %increment t of dt (sampling_time)
     
     % Save the position, previously calculated, into z
     
-    z = noised_radio_power(:,t);
+    [z, t] = extract_distance_with_polling_delay(noised_radio_power, polling_delay, sensor_size, t);
+
     %{
+        % old version:
+            z = noised_radio_power(:,t);
         % see extract_distance_with_polling_delay.m
-        z = extract_distance_with_polling_delay(noised_radio_power, polling_delay, sensor_size, t);
+            [z, t] = extract_distance_with_polling_delay(noised_radio_power, polling_delay, sensor_size, t);
     %}
     
     h = zeros(sensor_size,1);
@@ -139,16 +143,14 @@ for t=1:dt:N    %increment t of dt (sampling_time)
             
             dh_dx = -5*l*2*(x_hat(1)-beacons(i,1)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
             dh_dy = -5*l*2*(x_hat(2)-beacons(i,2)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
-            
             active_sensors = active_sensors + 1;
             
             H = [H;  dh_dx dh_dy 0 0 ];
             
-        else % in questo caso non si ha la misurazione del beacon perchè troppo lontano dal target -> riga nulla
+        else % in questo caso non si ha la misurazione del beacon perch� troppo lontano dal target -> riga nulla
             H = [H; 0 0 0 0];
         end
     end
-    
     if active_sensors<2
         disp('Attenzione sensori rilevati inferiori a 2');
     end
@@ -188,6 +190,9 @@ for t=1:dt:N    %increment t of dt (sampling_time)
     number_est = number_est+1;
     
 end
+
+%debug
+prediction
 
 dist_err = sum(dist) / number_est;
 RMSE_x = sqrt(sum(x_err.^2)/number_est);
