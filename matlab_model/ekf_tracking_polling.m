@@ -12,8 +12,6 @@
 function [prediction, dist_err, dist_max,  RMSE_x, RMSE_y, RMSE_net] = ekf_tracking_polling(name_trajectory, ...
                                                                 beacons, ...
                                                                 radius, ...
-                                                                motion_model, ...
-                                                                measurement_model, ...
                                                                 sampling_time, ...
                                                                 polling_delay, ...
                                                                 var_z...
@@ -43,63 +41,42 @@ for j=1:sensor_size
     plot(radius*cos(t)+beacons(j,1),radius*sin(t)+beacons(j,2),'--');
 end
 
+%% process covariance : velocity acceleration model
+% accel_noise_mag = .001; % process noise: the variability in how fast the target is speeding up
+%                           (stdv of acceleration: meters/sec^2)
+% accel_noise_mag =(delta_v_mean)^2 / dt; % NOT WORKING AS EXPECTED PROBABLY BECAUSE OF DATASET
+accel_noise_mag =(0.001)^2 / dt; %% tuned by hand
 
-if (strcmp(motion_model,'P'))
-    %% define the matrix of motion equation
-    F = [1,0 ; 0,1]; % brownian motion
-    
-    %% process covariance
-    Ex = eye(n);
-    
-    %% output covariance : each sensor has its own uncertainty and it's uncorrelated with the others
-    Ez = eye(sensor_size);
-    
-    %% Initialization
-    x_hat = X(1,:)';
-    
-elseif (strcmp(motion_model,'PV'))
-    %% process covariance : velocity acceleration model
-    % accel_noise_mag = .001; % process noise: the variability in how fast the target is speeding up
-    %                           (stdv of acceleration: meters/sec^2)
-    % accel_noise_mag =(delta_v_mean)^2 / dt; % NOT WORKING AS EXPECTED PROBABLY BECAUSE OF DATASET
-    accel_noise_mag =(0.001)^2 / dt; %% tuned by hand
-    
-    Ex = [  dt^3/3 0 dt^2/2 0; ...
-        0 dt^3/3 0 dt^2/2; ...
-        dt^2/2 0 dt 0; ...
-        0 dt^2/2 0 dt] .* accel_noise_mag; % Ex convert the process noise (stdv) into covariance matrix
-    
-    %% [state transition (state + velocity)] + [input control (acceleration)]
-    F = [1 0 dt 0; ...
-        0 1 0 dt; ...
-        0 0 1 0; ...
-        0 0 0 1]; %state update matrice
-    
-    %% Initialization
-    x_hat = [X(1,1); X(1,2); 0; 0 ];
-    
-    
-    
-    %% output covariance : each sensor has its own uncertainty and it's uncorrelated with the others
-    
-    Ez = eye(sensor_size)*var_z;
-    
-end
+Ex = [  dt^3/3 0 dt^2/2 0; ...
+    0 dt^3/3 0 dt^2/2; ...
+    dt^2/2 0 dt 0; ...
+    0 dt^2/2 0 dt] .* accel_noise_mag; % Ex convert the process noise (stdv) into covariance matrix
+
+%% [state transition (state + velocity)] + [input control (acceleration)]
+F = [1 0 dt 0; ...
+    0 1 0 dt; ...
+    0 0 1 0; ...
+    0 0 0 1]; %state update matrice
+
+%% Initialization
+x_hat = [X(1,1); X(1,2); 0; 0 ];
+
+
+
+%% output covariance : each sensor has its own uncertainty and it's uncorrelated with the others
+
+Ez = eye(sensor_size)*var_z;
 
 P = Ex; % estimate of initial position variance (covariance matrix)
 prediction = x_hat';
 
-if (strcmp(measurement_model, 'euclidean'))
-    noised_distances = zeros(sensor_size,N);
-elseif (strcmp(measurement_model, 'rssi'))
-    %% parameters of the measurement model (taken from Peerapong et.Al)
-    Pd_0 = 3.0; % RSSI value at 1m [dBm]
-    R_0  = 1.0; % reference or breakpoint distance [m]
-    l = 3.0;    % path loss exponent
-    
-    radio_power = zeros(sensor_size,N);
-    noised_radio_power = zeros(sensor_size,N);    % zeros -> creates array of all zero
-end
+%% parameters of the measurement model (taken from Peerapong et.Al)
+Pd_0 = 3.0; % RSSI value at 1m [dBm]
+R_0  = 1.0; % reference or breakpoint distance [m]
+l = 3.0;    % path loss exponent
+
+radio_power = zeros(sensor_size,N);
+noised_radio_power = zeros(sensor_size,N);    % zeros -> creates array of all zero
 
 
 %% Kalman filter
@@ -115,18 +92,12 @@ for t=1:N
         % caluclating distances
         distances(k,t) = sqrt((X(t,1)-beacons(k,1)).^2 + (X(t,2)-beacons(k,2)).^2);
         
-        if (strcmp(measurement_model, 'rssi'))
-            radio_power(k,t) = Pd_0 - 5*l*log10(distances(k,t));
-        end
+        radio_power(k,t) = Pd_0 - 5*l*log10(distances(k,t));
         
         if distances(k,t) > radius
             distances(k,t) = 0;
         else
-            if (strcmp(measurement_model, 'rssi'))
-                noised_radio_power(k,t) = radio_power(k,t) + sqrt(var_z)*randn(1);
-            elseif (strcmp(measurement_model, 'euclidean'))
-                noised_distances(k,t) = distances(k,t) + sqrt(var_z)*randn(1);
-            end 
+            noised_radio_power(k,t) = radio_power(k,t) + sqrt(var_z)*randn(1);
         end
     end
 end
@@ -144,24 +115,17 @@ for t=1:dt:N    %increment t of dt (sampling_time)
     
     % Save the position, previously calculated, into z
     
-    if (strcmp(measurement_model, 'euclidean'))
-        z = noised_distances(:,t);
-    elseif (strcmp(measurement_model, 'rssi'))
-        
-        z = noised_radio_power(:,t);
-        %{
-            % see extract_distance_with_polling_delay.m
-            z = extract_distance_with_polling_delay(noised_radio_power, polling_delay, sensor_size, t);
-        %}
-    end
+    z = noised_radio_power(:,t);
+    %{
+        % see extract_distance_with_polling_delay.m
+        z = extract_distance_with_polling_delay(noised_radio_power, polling_delay, sensor_size, t);
+    %}
     
     h = zeros(sensor_size,1);
     for k=1:sensor_size
         if z(k) ~=0
             h(k) = sqrt((x_hat(1) - beacons(k,1)).^2 + (x_hat(2) - beacons(k,2)).^2);
-            if (strcmp(measurement_model, 'rssi'))
-                h(k) = Pd_0 - 5*l*log10(h(k));
-            end
+            h(k) = Pd_0 - 5*l*log10(h(k));
         end
     end
     
@@ -173,30 +137,18 @@ for t=1:dt:N    %increment t of dt (sampling_time)
     for i=1:size(z,1)
         if z(i) ~= 0 % si linearizza e si calcola nella predizione precedente
             
-            if (strcmp(measurement_model, 'euclidean'))
-                dh_dx = (x_hat(1)-beacons(i,1))/sqrt((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2);
-                dh_dy = (x_hat(2)-beacons(i,2))/sqrt((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2);
-            elseif (strcmp(measurement_model, 'rssi'))
-                dh_dx = -5*l*2*(x_hat(1)-beacons(i,1)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
-                dh_dy = -5*l*2*(x_hat(2)-beacons(i,2)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
-            end
+            dh_dx = -5*l*2*(x_hat(1)-beacons(i,1)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
+            dh_dy = -5*l*2*(x_hat(2)-beacons(i,2)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
+            
             active_sensors = active_sensors + 1;
             
-            if (strcmp(motion_model, 'P'))
-                H = [H;  dh_dx dh_dy];
-            elseif (strcmp(motion_model, 'PV'))
-                H = [H;  dh_dx dh_dy 0 0 ];
-            end
+            H = [H;  dh_dx dh_dy 0 0 ];
             
-        else % in questo caso non si ha la misurazione del beacon perch� troppo lontano dal target -> riga nulla
-            if (strcmp(motion_model, 'P'))
-                H = [H; 0 0];
-            elseif (strcmp(motion_model, 'PV'))
-                H = [H; 0 0 0 0];
-            end
-            
+        else % in questo caso non si ha la misurazione del beacon perchè troppo lontano dal target -> riga nulla
+            H = [H; 0 0 0 0];
         end
     end
+    
     if active_sensors<2
         disp('Attenzione sensori rilevati inferiori a 2');
     end
@@ -218,11 +170,7 @@ for t=1:dt:N    %increment t of dt (sampling_time)
     x_hat = x_hat + K*(z-h);
     % update the error covariance
     
-    if (strcmp(motion_model, 'P'))
-        P = (eye(2)-K*H)*P_hat;
-    elseif (strcmp(motion_model, 'PV'))
-        P = (eye(4)-K*H)*P_hat;
-    end
+    P = (eye(4)-K*H)*P_hat;
     
     prediction = [prediction; x_hat'];
     
