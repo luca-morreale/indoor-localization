@@ -109,15 +109,10 @@ dist_max = 0;
 
 for t=1:dt:N    %increment t of dt (sampling_time)
     
-    % if can not check at least 3 sensors than terminates!
-    if t+(polling_delay * sensor_size) > N +(polling_delay * 3)
-        break
-    end
-    
     % Save the position, previously calculated, into z
     
-    [z, t] = extract_distance_with_polling_delay(noised_radio_power, polling_delay, sensor_size, t);
-
+    [z, t] = extract_distance_with_polling_delay(noised_radio_power, polling_delay, t);
+    
     %{
         % old version:
             z = noised_radio_power(:,t);
@@ -192,7 +187,7 @@ for t=1:dt:N    %increment t of dt (sampling_time)
 end
 
 %debug
-prediction
+%prediction
 
 dist_err = sum(dist) / number_est;
 RMSE_x = sqrt(sum(x_err.^2)/number_est);
