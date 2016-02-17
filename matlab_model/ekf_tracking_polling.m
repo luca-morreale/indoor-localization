@@ -111,7 +111,7 @@ for t=1:dt:N    %increment t of dt (sampling_time)
     
     % Save the position, previously calculated, into z
     
-    [z, t] = extract_distance_with_polling_delay(noised_radio_power, polling_delay, t);
+    [z, t] = extract_distances(noised_radio_power, polling_delay, t);
     
     %{
         % old version:
