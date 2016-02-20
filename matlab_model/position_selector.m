@@ -12,14 +12,22 @@ for k=1:sensor_size
     if distances(k) > radius
         distances(k) = 0;
     end
+    
 end
 
-% removing zeros
-valide_distances = distances(find(distances > 0));
+% sorting distances
+[sorted_distances, indexes] = sort(distances);
 
-[B, indexes] = sort(valide_distances);
+% extracting number of valide distances
+valide_size = size(find(distances > 0), 1) - 1;
 
-beacon_indexes = indexes(1:min(qt, size(valide_distances,1)));
+% calculate the minimum number of beacon to consider
+offset = min(valide_size, qt-1);
+% calculate the first index of a valide beacon
+first_index  = size(indexes,1)-valide_size;
+
+% extract indexes
+beacon_indexes = indexes(first_index : first_index + offset);
 
 end
 

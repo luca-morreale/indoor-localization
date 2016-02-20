@@ -110,19 +110,12 @@ dist_max = 0;
 for t=1:dt:N    %increment t of dt (sampling_time)
     
     % Save the position, previously calculated, into z
+    [z, t] = selective_extraction(noised_radio_power, prediction(end,:), beacons, polling_delay, t, radius);
     
-    [z, t] = extract_distances(noised_radio_power, polling_delay, t);
-    
-    %{
-        % old version:
-            z = noised_radio_power(:,t);
-        % see extract_distance_with_polling_delay.m
-            [z, t] = extract_distance_with_polling_delay(noised_radio_power, polling_delay, sensor_size, t);
-    %}
     
     h = zeros(sensor_size,1);
     for k=1:sensor_size
-        if z(k) ~=0
+        if z(k) ~= 0
             h(k) = sqrt((x_hat(1) - beacons(k,1)).^2 + (x_hat(2) - beacons(k,2)).^2);
             h(k) = Pd_0 - 5*l*log10(h(k));
         end
