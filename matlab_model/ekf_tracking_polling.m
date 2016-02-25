@@ -116,7 +116,6 @@ for t=1:dt:N    %increment t of dt (sampling_time)
     P_hat = F*P*F' + Ex;
     
     
-    x_hat
     % Save the position, previously calculated, into z
     [z, t] = selective_extraction(noised_radio_power, x_hat', beacons, polling_delay, t, radius);
     
