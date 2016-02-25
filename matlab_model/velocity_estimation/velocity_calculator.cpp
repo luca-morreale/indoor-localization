@@ -2,7 +2,7 @@
  * Program used to estimate the velocity
  * of the robot between two adjacent points.
  *
- * Result: 0.292 m/s -> 1km/h
+ * Result: 0.00139048 time: 21ms
  */
 
 #include <cstdlib>

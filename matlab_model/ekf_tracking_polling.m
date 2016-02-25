@@ -108,9 +108,17 @@ number_est = 1;
 dist_max = 0;
 
 for t=1:dt:N    %increment t of dt (sampling_time)
+    %% prediction step
     
+    % project the state ahead
+    x_hat = F * x_hat;
+    % project the covariance ahead
+    P_hat = F*P*F' + Ex;
+    
+    
+    x_hat
     % Save the position, previously calculated, into z
-    [z, t] = selective_extraction(noised_radio_power, prediction(end,:), beacons, polling_delay, t, radius);
+    [z, t] = selective_extraction(noised_radio_power, x_hat', beacons, polling_delay, t, radius);
     
     
     h = zeros(sensor_size,1);
@@ -142,14 +150,6 @@ for t=1:dt:N    %increment t of dt (sampling_time)
     if active_sensors<2
         disp('Attenzione sensori rilevati inferiori a 2');
     end
-    
-    
-    %% prediction step
-    
-    % project the state ahead
-    x_hat = F * x_hat;
-    % project the covariance ahead
-    P_hat = F*P*F' + Ex;
     
     %% correction step
     
