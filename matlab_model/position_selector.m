@@ -1,4 +1,4 @@
-function [ beacon_indexes ] = poistion_selector( position, beacons_position, radius, qt)
+function [ beacon_indexes ] = poistion_selector( position, beacons_position, radius, qt, measurement_weighted, P_hat)
 % This function computes the distances bewtween each beacons and the 
 % given position, and then extract the index of first _qt_ nearer beacons 
 
@@ -7,9 +7,25 @@ distances = zeros(sensor_size, 1);
 
 % computing distances
 for k=1:sensor_size
-    distances(k) = sqrt((position(1)-beacons_position(k,1)).^2 + ...
-                        (position(2)-beacons_position(k,2)).^2);
-    if distances(k) > radius
+%    distances(k) = sqrt((position(1)-beacons_position(k,1)).^2 + ...
+%                        (position(2)-beacons_position(k,2)).^2);
+
+    if not(measurement_weighted)
+        distances(k) = (position(1:2)-beacons_position(k,1:2)) * (position(1:2)-beacons_position(k,1:2))';
+    else
+        A = (position-[beacons_position(k,:), 0, 0]);
+        distances(k) = A * inv(P_hat) * A';
+    end
+    
+    distances
+   % chi quadro 2 gradi libertà al 95%
+   % dof = 2;
+   % y = chipdf(radius*radius, dof)
+   % or
+   % (position(1:2) - beacons_position(k,1:2)).^2 /
+   %     beacons_position(k,1:2);
+   
+    if distances(k) > radius*radius
         distances(k) = 0;
     end
     

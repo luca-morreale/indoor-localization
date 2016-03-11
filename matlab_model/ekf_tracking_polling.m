@@ -14,7 +14,8 @@ function [prediction, dist_err, dist_max,  RMSE_x, RMSE_y, RMSE_net] = ekf_track
                                                                 radius, ...
                                                                 sampling_time, ...
                                                                 polling_delay, ...
-                                                                var_z...
+                                                                var_z,...
+                                                                measurement_weighted ...
                                                                 )
 %% load the trajectory
 file = load(name_trajectory);
@@ -24,7 +25,7 @@ N = size(X,1);
 
 % define polling query of sensors
 dt = sampling_time;
-
+%dt = 25*10.^(-3);
 % number of sensors
 sensor_size = size(beacons,1);
 
@@ -45,7 +46,7 @@ end
 %% process covariance : velocity acceleration model
 % accel_noise_mag = .001; % process noise: the variability in how fast the target is speeding up
 %                           (stdv of acceleration: meters/sec^2)
-% accel_noise_mag =(delta_v_mean)^2 / dt; % NOT WORKING AS EXPECTED PROBABLY BECAUSE OF DATASET
+%accel_noise_mag =(delta_v_mean)^2 / dt; % NOT WORKING AS EXPECTED PROBABLY BECAUSE OF DATASET
 accel_noise_mag =(0.001)^2 / dt; %% tuned by hand
 
 Ex = [  dt^3/3 0 dt^2/2 0; ...
@@ -77,6 +78,8 @@ R_0  = 1.0; % reference or breakpoint distance [m]
 l = 3.0;    % path loss exponent
 
 radio_power = zeros(sensor_size,N);
+% noised_radio_power is a matrix [sensor_size, N]. Element [i,j] is the
+% measurement of the distance between beacon i and the target at time j.
 noised_radio_power = zeros(sensor_size,N);    % zeros -> creates array of all zero
 
 
@@ -90,7 +93,7 @@ distances = zeros(sensor_size,N);   % initializing the vector with all 0
 for t=1:N
     
     for k=1:sensor_size
-        % caluclating distances
+        % caluclating distances betweeen kth beacon and the target
         distances(k,t) = sqrt((X(t,1)-beacons(k,1)).^2 + (X(t,2)-beacons(k,2)).^2);
         
         radio_power(k,t) = Pd_0 - 5*l*log10(distances(k,t));
@@ -98,6 +101,7 @@ for t=1:N
         if distances(k,t) > radius
             distances(k,t) = 0;
         else
+            % add noise to the rssi measure
             noised_radio_power(k,t) = radio_power(k,t) + sqrt(var_z)*randn(1);
         end
     end
@@ -107,17 +111,19 @@ end
 number_est = 1;
 dist_max = 0;
 
-for t=1:dt:N    %increment t of dt (sampling_time)
+for t=1:N
     %% prediction step
     
-    % project the state ahead
+    % project the state ahead (prediction of (x,y) coordinates at t knowing state at t-1)
     x_hat = F * x_hat;
     % project the covariance ahead
     P_hat = F*P*F' + Ex;
     
     
-    % Save the position, previously calculated, into z
-    [z, t] = selective_extraction(noised_radio_power, x_hat', beacons, polling_delay, t, radius);
+    % Extract measurement from noised radio power from the three beacons
+    % that are supposed to be closest to the target
+    % z is a column vector containing up to 3 measurement
+    [z, t] = selective_extraction(noised_radio_power, x_hat', beacons, polling_delay, t, radius, measurement_weighted, P_hat);
     
     
     h = zeros(sensor_size,1);
