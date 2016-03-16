@@ -11,3 +11,8 @@ Modifiche fatte sino ad oggi:
 * modifica posizione beacon per migliorare la copertura del percorso _significativo miglioramento della posizione rilevata e decremento del DistanceErrorAvg_
  * DistanceErrorAvg 0.96 'img/beacon_new_position.jpg'
 
+### Report 16/03/16
+
+* aggiunta calcolo della distanza pesata mediante l'uso della matrice delle coovarianze _quasi impercettibile peggioramente del tracking della posizione_
+ * DistanceErrorAvf 1.22 vs 1.20 derivato dal calcolo della distanza euclidea
+
