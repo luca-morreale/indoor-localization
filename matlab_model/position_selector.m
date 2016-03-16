@@ -13,19 +13,10 @@ for k=1:sensor_size
     A = (position - [beacons_position(k,:), 0, 0]);
     if not(measurement_weighted)
         distances(k) = A(1:2) * A(1:2)';
-        
-        if distances(k) > radius*radius
-            distances(k) = 0;
-        end
-        
+
     else
         distances(k) = A * (P_hat \ A');
-        
-        chisquare = (A(1:2) ./ beacons_position(k)) * A(1:2)';
-        if chisquare > radius
-            distances(k) = 0;
-        end
-        
+
     end
 
 end
