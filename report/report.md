@@ -16,3 +16,5 @@ Modifiche fatte sino ad oggi:
 * aggiunta calcolo della distanza pesata mediante l'uso della matrice delle coovarianze _quasi impercettibile peggioramente del tracking della posizione_
  * DistanceErrorAvf 1.22 vs 1.20 derivato dal calcolo della distanza euclidea
 
+* aggiunti muri dimostrativi nel plot, è opzionalmente possibile evitare di mostrare il range dei beacon
+
