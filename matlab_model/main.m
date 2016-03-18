@@ -31,7 +31,8 @@ polling_delay = round(400/25);
                                                                              sampling_time, ...
                                                                              polling_delay, ...
                                                                              var_z, ...
-                                                                             true ... % false do no use covariance
+                                                                             true, ... % use covariance
+                                                                             true ... % print range of beacons
                                                                             );
 
 disp(['Distance Error  Avg: ',num2str(dist_err)]);

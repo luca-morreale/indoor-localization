@@ -15,7 +15,8 @@ function [prediction, dist_err, dist_max,  RMSE_x, RMSE_y, RMSE_net] = ekf_track
                                                                 sampling_time, ...
                                                                 polling_delay, ...
                                                                 var_z,...
-                                                                measurement_weighted ...
+                                                                measurement_weighted, ...
+                                                                print_beacons_range ...
                                                                 )
 %% load the trajectory
 file = load(name_trajectory);
@@ -32,16 +33,7 @@ sensor_size = size(beacons,1);
 % dimension of the states : 2D motion x,y
 n = 2;
 
-%% plot the trajectory and sensors position
-figure;
-plot(X(:,1),X(:,2));
-hold on;
-plot(beacons(:,1),beacons(:,2), 'x');
-t = linspace(0,2*pi);
-for j=1:sensor_size
-    plot(radius*cos(t)+beacons(j,1),radius*sin(t)+beacons(j,2),'--');
-end
-
+plot_walls(X, beacons, sensor_size, radius, print_beacons_range);
 
 %% process covariance : velocity acceleration model
 % accel_noise_mag = .001; % process noise: the variability in how fast the target is speeding up
