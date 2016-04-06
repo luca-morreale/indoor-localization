@@ -35,6 +35,14 @@ n = 2;
 
 plot_walls(X, beacons, sensor_size, radius, print_beacons_range);
 
+% function to convert space to RSSI
+spaceToValue = @(x,y)  (-2.859e-07)*(sqrt(x.^2 + y.^2)).^3 + 0.0003492*(x.^2 + y.^2) + -0.1801*sqrt(x.^2 + y.^2) + 36.69;
+
+% function derived using all data
+%spaceToValue = @(x)  (-1.104e-07)*x.^3 + 0.0002158*x.^2 + -0.1515*x + 35.83;
+
+
+
 %% process covariance : velocity acceleration model
 % accel_noise_mag = .001; % process noise: the variability in how fast the target is speeding up
 %                           (stdv of acceleration: meters/sec^2)
@@ -88,7 +96,8 @@ for t=1:N
         % caluclating distances betweeen kth beacon and the target
         distances(k,t) = sqrt((X(t,1)-beacons(k,1)).^2 + (X(t,2)-beacons(k,2)).^2);
         
-        radio_power(k,t) = Pd_0 - 5*l*log10(distances(k,t));
+        %radio_power(k,t) = Pd_0 - 5*l*log10(distances(k,t));
+        radio_power(k,t) = spaceToValue((X(t,1)-beacons(k,1)), (X(t,2)-beacons(k,2)));
         
         if distances(k,t) > radius
             distances(k,t) = 0;
@@ -122,7 +131,8 @@ for t=1:N
     for k=1:sensor_size
         if z(k) ~= 0
             h(k) = sqrt((x_hat(1) - beacons(k,1)).^2 + (x_hat(2) - beacons(k,2)).^2);
-            h(k) = Pd_0 - 5*l*log10(h(k));
+            %h(k) = Pd_0 - 5*l*log10(h(k));
+            h(k) = spaceToValue((x_hat(1) - beacons(k,1)), (x_hat(2) - beacons(k,2)));
         end
     end
     
@@ -134,8 +144,13 @@ for t=1:N
     for i=1:size(z,1)
         if z(i) ~= 0 % si linearizza e si calcola nella predizione precedente
             
-            dh_dx = -5*l*2*(x_hat(1)-beacons(i,1)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
-            dh_dy = -5*l*2*(x_hat(2)-beacons(i,2)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
+            dx = @(x,y) (-2.859e-07)*1.5*(sqrt(x.^2 + y.^2)) * 2*x + 0.0003492*2*x + -0.1801* x * 1/sqrt(x.^2 + y.^2);
+            dy = @(x,y) (-2.859e-07)*1.5*(sqrt(x.^2 + y.^2)) * 2*y + 0.0003492*2*y + -0.1801* y * 1/sqrt(x.^2 + y.^2);
+            % we have to compute the derivative and change the formula below
+            %dh_dx = -5*l*2*(x_hat(1)-beacons(i,1)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
+            %dh_dy = -5*l*2*(x_hat(2)-beacons(i,2)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
+            dh_dx = dx(x_hat(1)-beacons(i,1), x_hat(2)-beacons(i,2));
+            dh_dy = dy(x_hat(1)-beacons(i,1), x_hat(2)-beacons(i,2));
             active_sensors = active_sensors + 1;
             
             H = [H;  dh_dx dh_dy 0 0 ];
