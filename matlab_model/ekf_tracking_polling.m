@@ -42,7 +42,6 @@ spaceToValue = @(x,y)  (-2.859e-07)*(sqrt(x.^2 + y.^2)).^3 + 0.0003492*(x.^2 + y
 %spaceToValue = @(x)  (-1.104e-07)*x.^3 + 0.0002158*x.^2 + -0.1515*x + 35.83;
 
 
-
 %% process covariance : velocity acceleration model
 % accel_noise_mag = .001; % process noise: the variability in how fast the target is speeding up
 %                           (stdv of acceleration: meters/sec^2)
@@ -61,7 +60,8 @@ F = [1 0 dt 0; ...
     0 0 0 1]; %state update matrice
 
 %% Initialization
-x_hat = [X(1,1); X(1,2); 0; 0 ];
+estimate_pos = initilize_position(beacons, X(1));
+x_hat = [estimate_pos(1,1); estimate_pos(1,2); 0; 0 ];
 
 
 

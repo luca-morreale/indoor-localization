@@ -15,7 +15,7 @@ beacons_position = [7.5,3.5;   ...
                      17.5,2;    ...
                     ];
 
-beacons_radius = 7;
+beacons_radius = 9;
 sampling_time = 1;    % distance between each "polling cycle"
 var_z = 0.1;
 
