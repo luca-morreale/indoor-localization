@@ -1,10 +1,20 @@
 #ifndef BASESTATION_DATACONVERTER_H
 #define BASESTATION_DATACONVERTER_H
 
+#include <vector>
+#include <string>
+#include <regex>
+
+#include <jsoncpp/json/value.h>
+#include <jsoncpp/json/json.h>
+// #include "jsoncpp/dist/json/json.h"
+
 
 
 namespace basestation {
 
+    typedef std::vector<std::string> VectorString;
+    typedef VectorString::iterator VectorStringIterator;
     
     class DataConverter {
     public:
@@ -16,8 +26,11 @@ namespace basestation {
         
 
     protected:
-        
+        static std::regex reg;
 
+        static Json::Value getEmptyJson();
+        static Json::Value getErrorJson();
+        static Json::Value parse(std::string str);
 
     private:
         static const std::string EMPTY;
