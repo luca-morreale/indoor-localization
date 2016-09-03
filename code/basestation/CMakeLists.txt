@@ -11,20 +11,25 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 set(SOURCE
    ${PROJECT_SOURCE_DIR}/data_converter.cpp
+   ${PROJECT_SOURCE_DIR}/serial_reader.cpp
+   ${PROJECT_SOURCE_DIR}/basestation_server.cpp
 )
+
 set(HEADERS
    ${PROJECT_SOURCE_DIR}/include/data_converter.h
+   ${PROJECT_SOURCE_DIR}/include/serial_reader.h
+   ${PROJECT_SOURCE_DIR}/include/basestation_server.h
 )
 
 
 
 add_executable(serial serial.cpp ${SOURCE} ${HEADERS})
-#add_executable(server server.cpp ${SOURCE} ${HEADERS})
+add_executable(server server.cpp ${SOURCE} ${HEADERS})
 
 target_link_libraries(serial jsoncpp)
 target_link_libraries(serial wiringPi)
 target_link_libraries(serial pthread)
 
-#target_link_libraries(server jsoncpp)
-#target_link_libraries(server wiringPi)
-#target_link_libraries(server pthread)
+target_link_libraries(server jsoncpp)
+target_link_libraries(server wiringPi)
+target_link_libraries(server pthread)
