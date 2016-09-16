@@ -23,6 +23,8 @@ namespace basestation {
         static bool isValid(std::string);
         static bool isEmpty(std::string);
         static bool isError(std::string);
+
+        static Json::Value extractJson(std::string);
         
 
     protected:
@@ -39,6 +41,8 @@ namespace basestation {
 
         static std::string trim(std::string str);
         static bool startsWith(std::string str, std::string start);
+        static void skipForward(std::sregex_iterator &next);
+        static std::string getValue(std::sregex_iterator &next);
 
 
     };
