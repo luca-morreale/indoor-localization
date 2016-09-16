@@ -4,6 +4,8 @@
 #include <jsoncpp/json/json.h>
 
 #include <iostream>
+#include <vector>
+#include <unistd.h>
 
 #include "data_converter.h"
 
@@ -11,9 +13,14 @@
 #define BAUD_RATE 115200
 
 #define ITERATIONS 5
+#define SLEEP 401000 // 401 ms
 
 
 using namespace std;
+
+void fillRSSIValues(int sd, vector<int> &values);
+double averageRSSID(vector<int> &nums);
+int majorityElement(vector<int> &nums);
 
 int main()
 {
@@ -23,32 +30,61 @@ int main()
         return 1;
     }
 
-    delay(1);
-
-    string measure[ITERATIONS];
-    int values[ITERATIONS];
-    double avg = 0;
+    usleep(SLEEP);
     
-    for(int i=0; i<ITERATIONS; i++) {
-        serialPrintf(sd, "SCANA\n");
-        delay(1);
-        
-        while(serialDataAvail(sd) > 0) {
-            measure[i] += (char)serialGetchar(sd);
-        }
-        cout << measure[i] << endl;
-
-        Json::Value root = basestation::DataConverter::convertToJson(measure[i]);
-        values[i] = root["rssid"].asInt();
-        avg += values[i];
-    }
-
-    avg /= ITERATIONS;
+    vector<int> values(ITERATIONS);
+    fillRSSIValues(sd, values);
 
     for(int i = 0; i <ITERATIONS; i++) {
-        cout << values[i] << endl;
+        cout << "value-" << i << ": " << values[i] << endl;
     }
-    cout << avg << endl;
+    cout << "average: " << averageRSSID(values) << endl;
+    cout << "majority element:" << majorityElement(values) << endl;
     
     return 0;
+}
+
+void fillRSSIValues(int sd, vector<int> &values)
+{
+    std::string measure;
+    
+    for(int i=0; i<ITERATIONS; i++) {
+        serialFlush(sd);
+        serialPrintf(sd, "SCANA\n");
+        usleep(SLEEP);
+        
+        while(serialDataAvail(sd) > 0) {
+            measure += (char)serialGetchar(sd);
+        }
+        cout << measure << endl;
+
+        Json::Value root = basestation::DataConverter::extractJson(measure);
+
+        values[i] = root["beacons"][0]["rssid"].asInt();
+    }
+}
+
+double averageRSSID(vector<int> &nums)
+{
+    int sum = 0;
+    for (int n : nums) {
+        sum += n;
+    }
+    return sum / nums.size();
+}
+
+int majorityElement(vector<int> &nums)
+{
+    int candidate = nums[0], counter = 0;
+    for (int n: nums) {
+        if (counter == 0) {
+            candidate = n;
+            counter = 1;
+        } else if (candidate == n) {
+            counter++;
+        } else {
+            counter--;
+        }
+    }
+    return candidate;
 }
