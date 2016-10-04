@@ -24,7 +24,7 @@ BaseStationServer::BaseStationServer(int port)
 
 bool BaseStationServer::portIsValid(int port)
 {
-    return (port > 65535) || (port < 2000);
+    return (port < 65535) && (port > 2000);
 }
 
 void BaseStationServer::startServer()
@@ -107,7 +107,7 @@ void BaseStationServer::getSocketAddr(struct sockaddr_in &addr, int fd)
 
 bool BaseStationServer::isBindSuccessful()
 {
-    return bind(socketListener, (const sockaddr*)serverAddress, sizeof(serverAddress)) >= 0;
+    return bind(socketListener, (const sockaddr*) serverAddress, sizeof(*serverAddress)) >= 0;
 }
 
 bool BaseStationServer::connectionSuccessful(int fd)

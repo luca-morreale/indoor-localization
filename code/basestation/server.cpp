@@ -7,7 +7,7 @@ using namespace std;
 
 int main()
 {
-	basestation::BaseStationServer server;
+	basestation::BaseStationServer server(10019);
 	
 	server.startServer();
 
