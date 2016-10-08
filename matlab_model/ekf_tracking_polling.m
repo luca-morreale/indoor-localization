@@ -36,7 +36,7 @@ n = 2;
 plot_walls(X, beacons, sensor_size, radius, print_beacons_range);
 
 % function to convert space to RSSI
-spaceToValue = @(x,y)  (-2.859e-07)*(sqrt(x.^2 + y.^2)).^3 + 0.0003492*(x.^2 + y.^2) + -0.1801*sqrt(x.^2 + y.^2) + 36.69;
+spaceToValue = @(x,y)  (-1.416e-07)*(sqrt(x.^2 + y.^2)).^3 + 0.0002311*(x.^2 + y.^2) + -0.1476*sqrt(x.^2 + y.^2) + 36.79;
 
 % function derived using all data
 %spaceToValue = @(x)  (-1.104e-07)*x.^3 + 0.0002158*x.^2 + -0.1515*x + 35.83;
@@ -144,18 +144,17 @@ for t=1:N
     for i=1:size(z,1)
         if z(i) ~= 0 % si linearizza e si calcola nella predizione precedente
             
-            dx = @(x,y) (-2.859e-07)*1.5*(sqrt(x.^2 + y.^2)) * 2*x + 0.0003492*2*x + -0.1801* x * 1/sqrt(x.^2 + y.^2);
-            dy = @(x,y) (-2.859e-07)*1.5*(sqrt(x.^2 + y.^2)) * 2*y + 0.0003492*2*y + -0.1801* y * 1/sqrt(x.^2 + y.^2);
-            % we have to compute the derivative and change the formula below
-            %dh_dx = -5*l*2*(x_hat(1)-beacons(i,1)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
-            %dh_dy = -5*l*2*(x_hat(2)-beacons(i,2)) / (log(10)*((x_hat(1)-beacons(i,1))^2 + (x_hat(2)-beacons(i,2))^2));
+            dx = @(x,y) (-1.416e-07)*1.5*(sqrt(x.^2 + y.^2)) * 2*x + 0.0002311*2*x + -0.1476* x * 1/sqrt(x.^2 + y.^2);
+            dy = @(x,y) (-1.416e-07)*1.5*(sqrt(x.^2 + y.^2)) * 2*y + 0.0002311*2*y + -0.1476* y * 1/sqrt(x.^2 + y.^2);
+            % the formula above are computed by derivating the function spaceToValue wrt x and y
+            
             dh_dx = dx(x_hat(1)-beacons(i,1), x_hat(2)-beacons(i,2));
             dh_dy = dy(x_hat(1)-beacons(i,1), x_hat(2)-beacons(i,2));
             active_sensors = active_sensors + 1;
             
             H = [H;  dh_dx dh_dy 0 0 ];
             
-        else % in questo caso non si ha la misurazione del beacon perch� troppo lontano dal target -> riga nulla
+        else % empty line because the beacon is too far away from the target
             H = [H; 0 0 0 0];
         end
     end
