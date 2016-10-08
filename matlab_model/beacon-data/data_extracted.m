@@ -2,6 +2,10 @@ clc;
 clear all;
 close all;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Data extracted from the xls % 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Data for fitting
 data = [1 432.4849; ...
         2 404.6552; ...
