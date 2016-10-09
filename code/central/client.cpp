@@ -38,11 +38,10 @@ std::string Client::askTo(std::string address)
 
 std::string Client::readFrom(int socketfd)
 {
-    char buffer[this->bufferSize];
-    read(socketfd, buffer, this->bufferSize);
+    std::string buffer(this->bufferSize, 0);
+    read(socketfd, &buffer[0], this->bufferSize);
 
-    std::string output(buffer);
-    return output;
+    return buffer;
 }
 
 void Client::prepareAddress(struct sockaddr_in *serv_addr, struct hostent *server)
