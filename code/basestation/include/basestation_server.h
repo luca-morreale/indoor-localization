@@ -4,11 +4,14 @@
 #include <wiringPi.h>
 #include <wiringSerial.h>
 
-#include <string>
 #include <arpa/inet.h>
-#include <sys/socket.h>
+#include <iostream>
 #include <netinet/in.h>
 #include <netinet/ip.h> 
+#include <stdexcept>
+#include <string>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include "serial_reader.h"
 

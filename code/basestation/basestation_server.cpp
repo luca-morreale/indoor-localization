@@ -1,9 +1,6 @@
 #include "basestation_server.h"
 #include "data_converter.h"
 
-#include <stdexcept>
-#include <unistd.h>
-#include <iostream>
 
 using namespace basestation;
 
@@ -58,7 +55,7 @@ void BaseStationServer::createServer()
         throw std::runtime_error("Cannot open the server socket!\n");
     }
     //copy zeros into string: serverAddress, clientAddress;
-    bzero((char*) serverAddress, sizeof(serverAddress));
+    std::memset((char *) serverAddress, 0, sizeof(serverAddress));
     setServerOptions();
     
 }
