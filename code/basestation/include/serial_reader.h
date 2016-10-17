@@ -8,7 +8,7 @@
 
 namespace basestation {
 
-	#define SLEEP 401000 // 401 ms
+	#define SLEEP 420000 // 401 ms
 
     #define DEVICE "/dev/ttyAMA0"
     #define BAUD_RATE 115200

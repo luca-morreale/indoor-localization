@@ -79,7 +79,7 @@ void BaseStationServer::answerRequest()
 
 int BaseStationServer::getClient()
 {
-    socklen_t len = sizeof(clientAddress);
+    unsigned int len = sizeof(*clientAddress);
     //this is where client connects. server will hang in this mode until client conn
     int clientFd = accept(socketListener, (sockaddr*) clientAddress, &len);
     checkConnection(clientFd);
