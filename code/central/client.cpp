@@ -1,4 +1,5 @@
 #include "include/client.h"
+#include <iostream>
 
 
 using namespace central;
@@ -18,7 +19,8 @@ std::string Client::askTo(std::string address)
 
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (hasBeenCreated(sockfd)) {
+    
+    if (!hasBeenCreated(sockfd)) {
         error("ERROR opening socket");
         //throw error
     }
@@ -29,8 +31,9 @@ std::string Client::askTo(std::string address)
         error("ERROR connecting");
         //throw error
     }
-
+    std::cout << "reading\n";
     std::string payload = this->readFrom(sockfd);
+    std::cout << "error reading\n";
     close(sockfd);
 
     return payload;
@@ -46,10 +49,10 @@ std::string Client::readFrom(int socketfd)
 
 void Client::prepareAddress(struct sockaddr_in *serv_addr, struct hostent *server)
 {
-    std::memset((char *) serv_addr, 0, sizeof(struct sockaddr_in));
+    bzero((char *) serv_addr, sizeof(*serv_addr));
     serv_addr->sin_family = AF_INET;
 
-    std::memcpy((void *) server->h_addr, (void *) serv_addr->sin_addr.s_addr, server->h_length);
+    bcopy((char *) server->h_addr, (char *) &serv_addr->sin_addr.s_addr, server->h_length);
     serv_addr->sin_port = htons(this->port);
 }
 
@@ -62,7 +65,7 @@ bool Client::hasBeenCreated(int socketfd)
 
 bool Client::failedConnection(int socketfd, struct sockaddr *serv_addr)
 {
-    return connect(socketfd, serv_addr, sizeof(struct sockaddr)) < 0;
+    return connect(socketfd, serv_addr, sizeof(*serv_addr)) < 0;
 }
 
 void Client::error(const char *msg)

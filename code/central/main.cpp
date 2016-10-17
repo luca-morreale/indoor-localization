@@ -2,16 +2,17 @@
 #include <iostream>
 
 #include "include/client.h"
+#include "include/ekf_polling.h"
 
 using namespace std;
 
 int main() {
 
-    auto client = new central::Client(10019);
-    std::string payload = client->askTo("192.168.1.19");
-    std::cout << payload;
+    central::Client client(10019);
+    std::cout << client.askTo("192.168.1.19");
+    std::cout << client.askTo("192.168.1.17");
+    
 
-    free(client);
 
     return 0;
 }

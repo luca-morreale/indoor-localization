@@ -3,6 +3,7 @@
 
 
 #include <cstdlib>
+#include <cstdio>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdexcept>
