@@ -35,7 +35,7 @@ class Client():
                 return data
 
             else:
-                return Exception()
+                return ""
 
         finally:
             sock.close()
