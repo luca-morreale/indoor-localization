@@ -33,7 +33,7 @@ class EKF(object):
     def prediction(self):
         self.estimated_position = self.F * self.estimated_position
         estimated_cov_matrix = self.F * self.cov_matrix * np.transpose(self.F) + self.Ex
-        measurements = self.selective_extraction(estimated_cov_matrix)
+        measurements = self.selectiveExtraction(estimated_cov_matrix)
 
         h = np.zeros(self.sensor_size)
         for i in range(0, self.sensor_size):
@@ -57,15 +57,15 @@ class EKF(object):
         self.cov_matrix = (np.eye(N=4) - K * H) * estimated_cov_matrix
         self.prediction_sequence.append(np.transpose(self.estimated_position))
 
-    def selective_extraction(self, estimated_cov_matrix):
-        indexes = self.position_selector(estimated_cov_matrix)
+    def selectiveExtraction(self, estimated_cov_matrix):
+        indexes = self.selectPosition(estimated_cov_matrix)
         measurements = []
         for i in indexes:
             data = self.client.pollBasestation(self.beacons[i].address)
             measurements += [extractRSSIForTag(self.tag, data)]
         return measurements
 
-    def position_selector(self, estimated_cov_matrix):
+    def selectPosition(self, estimated_cov_matrix):
         estimated_cov_matrix_inv = np.invert(estimated_cov_matrix)
         distances = []
         for i in self.sensor_size:
