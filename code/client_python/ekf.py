@@ -25,6 +25,26 @@ class EKF(object):
         self.cov_matrix = self.Ex
         self.prediction_sequence = [np.transpose(self.estimated_position)]
 
+    def setInitialPosition(self, init_pos):
+        for i in range(4):
+            self.estimated_position[i] = init_pos[i]
+
+    def setInitialPositionToCloserBeacon(self):
+        closer = self.getCloserBeacon()
+        self.setInitialPosition(closer.address)
+
+    def getCloserBeacon(self):
+        measurements = self.getAllMeasurements()
+        valid_beacons = self.sortWithIndeces(measurements)
+        return self.beacons[valid_beacons[0][0]]
+
+    def getAllMeasurements(self):
+        measurements = []
+        for beacon in self.beacons:
+            data = self.client.pollBasestation(beacon.address)
+            measurements.append(extractRSSIForTag(data, self.tag))
+        return measurements
+
     def ekf(self):
         H, h, measurements, estimated_cov_matrix = self.prediction()
         self.correction(H, h, measurements, estimated_cov_matrix)
