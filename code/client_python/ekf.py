@@ -73,8 +73,7 @@ class EKF(object):
             difference = np.transpose(self.estimated_position) - extended_beacon_pos
             distances += difference * (estimated_cov_matrix_inv * np.transpose(difference))
 
-        sorted_tuples = sorted(enumerate(distances), key=lambda x: x[1])
-        valid_distances = [item for item in sorted_tuples if item[1] > 0]
+        valid_distances = self.sortWithIndeces(distances)
         return [valid_distances[i][0] for i in range(0, min(3, len(valid_distances)))]
 
     def derivative(self, arr):
@@ -87,3 +86,7 @@ class EKF(object):
     def space_to_value(self, arr):
         return self.model_coeffs[0] * (np.sqrt(arr * arr)) ** 3 + self.model_coeffs[1] * (arr * arr) + \
                     self.model_coeffs[2] * np.sqrt(arr * arr) + self.model_coeffs[4]
+
+    def sortWithIndeces(self, list):
+        sorted_tuples = sorted(enumerate(list), key=lambda x: x[1])
+        return [item for item in sorted_tuples if item[1] > 0]
