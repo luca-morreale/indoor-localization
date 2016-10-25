@@ -32,6 +32,7 @@ class EKF(object):
     def setInitialPositionToCloserBeacon(self):
         closer = self.getCloserBeacon()
         self.setInitialPosition(closer.address)
+        return self.estimated_position
 
     def getCloserBeacon(self):
         measurements = self.getAllMeasurements()
