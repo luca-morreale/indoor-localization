@@ -23,11 +23,15 @@ def extractRSSIForTag(data, tag):
 
 
 def rssiForTag(beacons, tag):
+    if containsError(beacons):
+        raise NoMeasurementException(tag)
     for el in enumerate(beacons):
-        if el[1, "id_tag"] == tag:
-            return el[1, "rssi"]
+        if el[1]["id_tag"] == tag:
+            return el[1]["rssid"]
     raise NoMeasurementException(tag)
 
+def containsError(beacons):
+    return beacons == "ERR" or beacons == ""
 
 class NoMeasurementException(Exception):
     def __init__(self, tag, text="No correspondance found for tag id "):
