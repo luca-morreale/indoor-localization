@@ -36,8 +36,9 @@ n = 2;
 plot_walls(X, beacons, sensor_size, radius, print_beacons_range);
 
 % function to convert space to RSSI
-spaceToValue = @(x,y)  (-1.416e-07)*(sqrt(x.^2 + y.^2)).^3 + 0.0002311*(x.^2 + y.^2) + -0.1476*sqrt(x.^2 + y.^2) + 36.79;
-
+spaceToValue = @(x,y) (-0.1416)*(sqrt(x.^2 + y.^2)).^3 + 2.311 * (x.^2 + y.^2) + -14.76*sqrt(x.^2 + y.^2) + 36.79;
+% function derived from measurements in centimeters
+% spaceToValue = @(x,y) (-1.416e-07)*(sqrt(x.^2 + y.^2)).^3 + 0.0002311*(x.^2 + y.^2) + -0.1476*sqrt(x.^2 + y.^2) + 36.79;
 % function derived using all data
 %spaceToValue = @(x)  (-1.104e-07)*x.^3 + 0.0002158*x.^2 + -0.1515*x + 35.83;
 
@@ -72,11 +73,6 @@ Ez = eye(sensor_size)*var_z;
 P = Ex; % estimate of initial position variance (covariance matrix)
 prediction = x_hat';
 
-%% parameters of the measurement model (taken from Peerapong et.Al)
-Pd_0 = 3.0; % RSSI value at 1m [dBm]
-R_0  = 1.0; % reference or breakpoint distance [m]
-l = 3.0;    % path loss exponent
-
 radio_power = zeros(sensor_size,N);
 % noised_radio_power is a matrix [sensor_size, N]. Element [i,j] is the
 % measurement of the distance between beacon i and the target at time j.
@@ -98,7 +94,7 @@ for t=1:N
         
         %radio_power(k,t) = Pd_0 - 5*l*log10(distances(k,t));
         radio_power(k,t) = spaceToValue((X(t,1)-beacons(k,1)), (X(t,2)-beacons(k,2)));
-        
+
         if distances(k,t) > radius
             distances(k,t) = 0;
         else
@@ -107,7 +103,6 @@ for t=1:N
         end
     end
 end
-
 
 number_est = 1;
 dist_max = 0;
@@ -130,7 +125,6 @@ for t=1:N
     h = zeros(sensor_size,1);
     for k=1:sensor_size
         if z(k) ~= 0
-            h(k) = sqrt((x_hat(1) - beacons(k,1)).^2 + (x_hat(2) - beacons(k,2)).^2);
             %h(k) = Pd_0 - 5*l*log10(h(k));
             h(k) = spaceToValue((x_hat(1) - beacons(k,1)), (x_hat(2) - beacons(k,2)));
         end
@@ -144,8 +138,8 @@ for t=1:N
     for i=1:size(z,1)
         if z(i) ~= 0 % si linearizza e si calcola nella predizione precedente
             
-            dx = @(x,y) (-1.416e-07)*1.5*(sqrt(x.^2 + y.^2)) * 2*x + 0.0002311*2*x + -0.1476* x * 1/sqrt(x.^2 + y.^2);
-            dy = @(x,y) (-1.416e-07)*1.5*(sqrt(x.^2 + y.^2)) * 2*y + 0.0002311*2*y + -0.1476* y * 1/sqrt(x.^2 + y.^2);
+            dx = @(x,y) (-0.1416)*1.5*(sqrt(x.^2 + y.^2)) * 2*x + 2.311*2*x + -14.76* x * 1/sqrt(x.^2 + y.^2);
+            dy = @(x,y) (-0.1416)*1.5*(sqrt(x.^2 + y.^2)) * 2*y + 2.311*2*y + -14.76* y * 1/sqrt(x.^2 + y.^2);
             % the formula above are computed by derivating the function spaceToValue wrt x and y
             
             dh_dx = dx(x_hat(1)-beacons(i,1), x_hat(2)-beacons(i,2));
