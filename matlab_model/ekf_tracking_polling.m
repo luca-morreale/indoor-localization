@@ -1,5 +1,4 @@
 %% parameters
-
 % trajectory file
 % basestations: matrix of dimensions n x 2 [x_1 y_1 ; ... ; x_n y_n]
 % radius: operative area of the basestations
@@ -11,7 +10,7 @@
 % flag_print_walls: flag to choose to print or not walls
 % rssi_model_coeff: array containing the coefficients of the measurement model
 
-function [prediction, dist_err, dist_max,  RMSE_x, RMSE_y, RMSE_net] ...
+function [prediction_sequence, dist_err, dist_max,  RMSE_x, RMSE_y, RMSE_net] ...
         = ekf_tracking_polling(name_trajectory, ...
                                 basestations, ...
                                 radius, ...
@@ -34,12 +33,13 @@ sensor_size = size(basestations, 1);
 plot_walls(X, basestations, sensor_size, radius, flag_print_walls);
 
 % support functions
+arrayToDistance = @(array) sqrt(array * array');
 distanceFromCoordinates = @(x, y) sqrt(x.^2 + y.^2);
 
-% function to convert space to RSSI
-coordinatesToValue = @(x, y) rssi_model_coeff(1) * (distanceFromCoordinates(x, y)) .^3 + ...
-                        rssi_model_coeff(2) * distanceFromCoordinates(x, y) .^2 + ...
-                        rssi_model_coeff(3) * distanceFromCoordinates(x, y) + ...
+% function to convert distance to RSSI
+distanceToValue = @(distance) rssi_model_coeff(1) * (distance) .^3 + ...
+                        rssi_model_coeff(2) * distance .^2 + ...
+                        rssi_model_coeff(3) * distance + ...
                         rssi_model_coeff(4);
 
 dx = @(x, y) rssi_model_coeff(1) * 1.5 * distanceFromCoordinates(x, y) * 2 * x + rssi_model_coeff(2) * 2 * x + ...
@@ -72,7 +72,7 @@ x_hat = [X(1,1); X(1,2); 0; 0 ];
 Ez = eye(sensor_size) * var_z;
 
 P = Ex; % estimate of initial position variance (covariance matrix)
-prediction = x_hat';
+prediction_sequence = x_hat';
 
 radio_power = zeros(sensor_size, N);
 
@@ -90,12 +90,10 @@ distances = zeros(sensor_size, N);   % initializing the vector with all 0
 
 for t=1:N
     for k=1:sensor_size
-        coordinates_diff = [(X(t,1) - basestations(k,1)), (X(t,2) - basestations(k,2))];
-        
         % caluclating distances betweeen kth basestation and the target
-        distances(k,t) = distanceFromCoordinates(coordinates_diff(1), coordinates_diff(2));
+        distances(k,t) = arrayToDistance(X(t,:) - basestations(k,:));
         
-        radio_power(k,t) = coordinatesToValue(coordinates_diff(1), coordinates_diff(2));
+        radio_power(k,t) = distanceToValue(distances(k,t));
 
         if distances(k,t) > radius
             distances(k,t) = 0;
@@ -126,7 +124,7 @@ for t=1:N
     h = zeros(sensor_size,1);
     for k=1:sensor_size
         if z(k) ~= 0
-            h(k) = coordinatesToValue((x_hat(1) - basestations(k,1)), (x_hat(2) - basestations(k,2)));
+            h(k) = distanceToValue(arrayToDistance(x_hat(1:2)' - basestations(k,:)));
         end
     end
     
@@ -164,7 +162,7 @@ for t=1:N
     
     P = (eye(4)- K * H) * P_hat;
     
-    prediction = [prediction; x_hat'];
+    prediction_sequence = [prediction_sequence; x_hat'];
     
     %% compute distance error
     x_err(number_est) = X(t,1) - x_hat(1);
