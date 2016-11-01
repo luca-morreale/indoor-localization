@@ -54,9 +54,7 @@ def runNode():
                 rate = rospy.Rate(EVERY_MINUTE)  # once in a minute
                 position = ekf.setInitialPositionToCloserBeacon()
             else:
-                print "ekf"
                 position = ekf.ekf()
-                print "end ekf", position
 
             publishPosition(position, pub)
             rate = rospy.Rate(EVERY_SECOND)  # normal rate
