@@ -5,23 +5,23 @@ from matrix_operations import transpose, invert, multiply
 
 
 class EKF(object):
-    def __init__(self, tag, dt, var_z, beacons, model, selector):
+    def __init__(self, tag, dt, var_z, basestations, model, selector):
         self.tag = tag
         self.dt = dt
         self.var_z = var_z
-        self.sensor_size = len(beacons)
-        self.beacons = beacons  # of type Basestation
+        self.sensor_size = len(basestations)
+        self.basestations = basestations  # of type Basestation
         self.model = model
         self.selector = selector
         self.client = Client(10019)
-        self.Ex = np.array([[dt ** 3 / 3, 0, dt ** 2 / 2, 0],
-                            [0, dt ** 3 / 3, 0, dt ** 2 / 2],
-                            [dt ** 2 / 2, 0, dt, 0],
-                            [0, dt ** 2 / 2, 0, dt]])
-        self.F = np.array([[1, 0, dt, 0],
-                           [0, 1, 0, dt],
-                           [0, 0, 1, 0],
-                           [0, 0, 0, 1]])
+        self.Ex = np.array([[dt ** 3 / 3,  0,            dt ** 2 / 2,  0],
+                            [0,            dt ** 3 / 3,  0,            dt ** 2 / 2],
+                            [dt ** 2 / 2,  0,            dt,           0],
+                            [0,            dt ** 2 / 2,  0,            dt]])
+        self.F = np.array([[1,  0,  dt,  0],
+                           [0,  1,  0,  dt],
+                           [0,  0,  1,  0],
+                           [0,  0,  0,  1]])
         self.initVariables()
 
     def initVariables(self):
@@ -36,24 +36,24 @@ class EKF(object):
             self.estimated_position[i] = init_pos[i]
         self.prediction_sequence.append(self.estimated_position)
 
-    def setInitialPositionToCloserBeacon(self):
-        closer = self.getCloserBeacon()
-        self.setInitialPosition(closer.position)
+    def setInitialPositionToCloserBasestation(self):
+        closest = self.getCloserBasestation()
+        self.setInitialPosition(closest.position)
         return self.estimated_position
 
-    def getCloserBeacon(self):
+    def getCloserBasestation(self):
         measurements = self.getAllMeasurements()
-        valid_beacons = self.selector.sortWithIndeces(measurements)
-        return self.beacons[valid_beacons[0][0]]
+        valid_basestations = self.selector.sortWithIndeces(measurements)
+        return self.basestations[valid_basestations[0][0]]
 
     def getAllMeasurements(self):
         measurements = []
-        for beacon in self.beacons:
-            data = self.client.pollBasestation(beacon.address)
+        for basestation in self.basestations:
+            data = self.client.pollBasestation(basestation.address)
             measurements.append(extractRSSIForTag(data, self.tag))
         return measurements
 
-    def ekf(self):
+    def ekfIteration(self):
         H, h, measurements, estimated_cov_matrix = self.prediction()
         self.correction(H, h, measurements, estimated_cov_matrix)
         return self.estimated_position
@@ -66,13 +66,12 @@ class EKF(object):
         h = np.zeros(self.sensor_size)
         for i in range(0, self.sensor_size):
             if measurements[i] != 0:
-                h[i] = self.model.spaceToValue(self.estimated_position[0] - self.beacons[i].position)
+                h[i] = self.model.spaceToValue(self.estimated_position[0] - self.basestations[i].position)
 
-        # H is the measurement equation
         H = np.empty((0, 4))
         for i in range(0, len(measurements)):
             if measurements[i] != 0:
-                dh_dx, dh_dy = self.model.derivative(self.estimated_position[0] - self.beacons[i].position)
+                dh_dx, dh_dy = self.model.derivative(self.estimated_position[0] - self.basestations[i].position)
             else:
                 dh_dx, dh_dy = 0.0, 0.0
             H = np.append(H, np.array([[dh_dx, dh_dy, 0.0, 0.0]]), axis=0)
@@ -92,7 +91,7 @@ class EKF(object):
 
         measurements = np.zeros(self.sensor_size)
         for i in indexes:
-            data = self.client.pollBasestation(self.beacons[i].address)
+            data = self.client.pollBasestation(self.basestations[i].address)
             measurements[i] = extractRSSIForTag(data, self.tag)
 
         return measurements
