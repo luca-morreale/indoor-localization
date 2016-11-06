@@ -26,7 +26,7 @@ def rssiForTag(beacons, tag):
     if containsError(beacons):
         raise NoMeasurementException(tag)
     for el in enumerate(beacons):
-        if el[1]["id_tag"] == tag:
+        if el[1]["id_tag"] == str(tag):
             return el[1]["rssid"]
     raise NoMeasurementException(tag)
 
@@ -35,4 +35,4 @@ def containsError(beacons):
 
 class NoMeasurementException(Exception):
     def __init__(self, tag, text="No correspondance found for tag id "):
-        super(Exception, self).__init__(text + tag)
+        super(Exception, self).__init__(text + str(tag))

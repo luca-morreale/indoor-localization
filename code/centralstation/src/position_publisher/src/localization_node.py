@@ -35,15 +35,15 @@ class LocalizationNode(object):
         self.buildBasestation(stations)
 
     def buildBasestation(self, stations):
-        self.basestation = []
+        self.basestations = []
         for station in stations:
-            self.basestation.append(Basestation(station[0], station[1], station[2]))
+            self.basestations.append(Basestation(station[0], station[1], station[2]))
 
     def publishPosition(self, position):
         msg = Odometry()
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = '/odom'
-        msg.child_frame_id = '/target_' + self.tag
+        msg.child_frame_id = '/target_' + str(self.tag)
 
         msg.pose.pose.position = Point(position[0], position[1], 0)
         self.publisher.publish(msg)
@@ -51,19 +51,18 @@ class LocalizationNode(object):
     def localizationLoop(self):
         while not rospy.is_shutdown():
             try:
-                if self.miss >= 2:  # after two misses it is assumed the target is not in range
+                if self.miss_counter >= 2:  # after two misses it is assumed the target is not in range
                     self.rate = rospy.Rate(LocalizationNode.EVERY_MINUTE)  # once in a minute
                     position = self.ekf.setInitialPositionToCloserBasestation()
                 else:
                     position = self.ekf.ekfIteration()
-                    print position
 
                 self.publishPosition(position)
                 self.rate = rospy.Rate(LocalizationNode.EVERY_SECOND)  # normal rate
-                self.miss = 0
+                self.miss_counter = 0
 
             except NoMeasurementException:  # no measurements means the target is not in range
-                self.miss += 1
+                self.miss_counter += 1
 
             self.rate.sleep()
 

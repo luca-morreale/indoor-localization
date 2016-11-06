@@ -1,6 +1,7 @@
 import numpy as np
 from client import Client
 from json_extractor import extractRSSIForTag
+from json_extractor import NoMeasurementException
 from matrix_operations import transpose, invert, multiply
 
 
@@ -47,11 +48,27 @@ class EKF(object):
         return self.basestations[valid_basestations[0][0]]
 
     def getAllMeasurements(self):
-        measurements = []
-        for basestation in self.basestations:
-            data = self.client.pollBasestation(basestation.address)
-            measurements.append(extractRSSIForTag(data, self.tag))
+        return self.getMeasurementsForRange(range(0, self.sensor_size))
+
+    def getMeasurementsForRange(self, indexes):
+        measurements = np.zeros(self.sensor_size)
+        for i in indexes:
+            self.getMeasurement(i, measurements)
+
+        if self.emptyMeasurements(measurements):
+            raise NoMeasurementException(self.tag)
         return measurements
+
+    def getMeasurement(self, index, array):
+        try:
+            data = self.client.pollBasestation(self.basestations[index].address)
+            array[index] = extractRSSIForTag(data, self.tag)
+        except NoMeasurementException:
+            pass
+
+    def emptyMeasurements(self, measurements):
+        empty = np.zeros(self.sensor_size)
+        return np.all(empty == measurements)
 
     def ekfIteration(self):
         H, h, measurements, estimated_cov_matrix = self.prediction()
@@ -88,10 +105,4 @@ class EKF(object):
 
     def selectiveMeasurements(self, estimated_cov_matrix):
         indexes = self.selector.selectBestPositions(estimated_cov_matrix, self.estimated_position)
-
-        measurements = np.zeros(self.sensor_size)
-        for i in indexes:
-            data = self.client.pollBasestation(self.basestations[i].address)
-            measurements[i] = extractRSSIForTag(data, self.tag)
-
-        return measurements
+        return self.getMeasurementsForRange(indexes)
