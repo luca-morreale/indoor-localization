@@ -11,4 +11,7 @@
     </rosparam>
   </node>
 
+  <node pkg="tf" type="static_transform_publisher" name="tag_publisher" args="0 0 0 0 0 0 /map /target_2022 100"/>
+
+
 </launch>

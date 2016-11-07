@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
 import rospy
-from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point, Quaternion
+from geometry_msgs.msg import PointStamped
 
 from model import Poly3
 from basestation_selector import BasestationSelector
@@ -20,10 +20,12 @@ class LocalizationNode(object):
 
     def __init__(self):
         rospy.init_node('position_publisher', anonymous=True)
-        self.publisher = rospy.Publisher('odom', Odometry, queue_size=10)
         self.rate = rospy.Rate(LocalizationNode.EVERY_SECOND)
-
+        self.broadcaster = tf.TransformBroadcaster()
         self.extractParams()
+
+        self.frame = '/target_' + str(self.tag)
+        self.publisher = rospy.Publisher(self.frame, PointStamped, queue_size=10)
         self.model = Poly3(LocalizationNode.COEFFS)
         self.selector = BasestationSelector(self.basestations)
         self.ekf = EKF(self.tag, 1, 0.1, self.basestations, self.model, self.selector)
@@ -40,12 +42,11 @@ class LocalizationNode(object):
             self.basestations.append(Basestation(station[0], station[1], station[2]))
 
     def publishPosition(self, position):
-        msg = Odometry()
+        msg = PointStamped()
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = '/odom'
-        msg.child_frame_id = '/target_' + str(self.tag)
+        msg.header.frame_id = self.frame
 
-        msg.pose.pose.position = Point(position[0], position[1], 0)
+        msg.point = Point(position[0], position[1], 0)
         self.publisher.publish(msg)
 
     def localizationLoop(self):
