@@ -83,12 +83,12 @@ class EKF(object):
         h = np.zeros(self.sensor_size)
         for i in range(0, self.sensor_size):
             if measurements[i] != 0:
-                h[i] = self.model.spaceToValue(self.estimated_position[0] - self.basestations[i].position)
+                h[i] = self.model.spaceToValue(self.estimated_position[0:2] - self.basestations[i].position)
 
         H = np.empty((0, 4))
         for i in range(0, len(measurements)):
             if measurements[i] != 0:
-                dh_dx, dh_dy = self.model.derivative(self.estimated_position[0] - self.basestations[i].position)
+                dh_dx, dh_dy = self.model.derivative(self.estimated_position[0:2] - self.basestations[i].position)
             else:
                 dh_dx, dh_dy = 0.0, 0.0
             H = np.append(H, np.array([[dh_dx, dh_dy, 0.0, 0.0]]), axis=0)
@@ -98,8 +98,8 @@ class EKF(object):
     def correction(self, H, h, measurements, estimated_cov_matrix):
         H_hat = multiply(H, estimated_cov_matrix, transpose(H))
         K = multiply(estimated_cov_matrix, transpose(H), invert(H_hat + self.Ez))
-
         self.estimated_position += multiply(K, (measurements - h))
+
         self.cov_matrix = multiply((np.eye(N=4) - multiply(K, H)), estimated_cov_matrix)
         self.prediction_sequence.append(transpose(self.estimated_position))
 

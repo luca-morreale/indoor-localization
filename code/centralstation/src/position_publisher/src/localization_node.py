@@ -21,7 +21,6 @@ class LocalizationNode(object):
     def __init__(self):
         rospy.init_node('position_publisher', anonymous=True)
         self.rate = rospy.Rate(LocalizationNode.EVERY_SECOND)
-        self.broadcaster = tf.TransformBroadcaster()
         self.extractParams()
 
         self.frame = '/target_' + str(self.tag)
@@ -39,7 +38,7 @@ class LocalizationNode(object):
     def buildBasestation(self, stations):
         self.basestations = []
         for station in stations:
-            self.basestations.append(Basestation(station[0], station[1], station[2]))
+            self.basestations.append(Basestation(station[0], float(station[1]), float(station[2])))
 
     def publishPosition(self, position):
         msg = PointStamped()
