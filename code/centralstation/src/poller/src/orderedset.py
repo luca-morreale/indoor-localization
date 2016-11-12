@@ -1,4 +1,5 @@
 import collections
+from threading import Lock
 
 
 class OrderedSet(collections.MutableSet):   # missing multi-threading protection!!!!!
@@ -8,6 +9,7 @@ class OrderedSet(collections.MutableSet):   # missing multi-threading protection
         self.map = {}                   # key --> [key, prev, next]
         if iterable is not None:
             self |= iterable
+        self.lock = Lock()
 
     def __len__(self):
         return len(self.map)
@@ -19,16 +21,20 @@ class OrderedSet(collections.MutableSet):   # missing multi-threading protection
         return self.__len__() == 0
 
     def append(self, key):      # append at rightmost position
+        self.lock.acquire()
         if key not in self.map:
             end = self.end
             curr = end[1]
             curr[2] = end[1] = self.map[key] = [key, curr, end]
+        self.lock.release()
 
     def discard(self, key):
+        self.lock.acquire()
         if key in self.map:
             key, prev, next = self.map.pop(key)
             prev[2] = next
             next[1] = prev
+        self.lock.release()
 
     def __iter__(self):
         end = self.end
@@ -45,10 +51,12 @@ class OrderedSet(collections.MutableSet):   # missing multi-threading protection
             curr = curr[1]
 
     def pop(self):      # remove leftmost element
+        self.lock.acquire()
         if not self:
             raise KeyError('set is empty')
         key = self.end[-1][0]
         self.discard(key)
+        self.lock.release()
         return key
 
     def __repr__(self):
