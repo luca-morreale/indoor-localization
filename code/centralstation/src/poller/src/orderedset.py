@@ -1,8 +1,8 @@
-import collections
+from collections import MutableSet
 from threading import Lock
 
 
-class OrderedSet(collections.MutableSet):   # missing multi-threading protection!!!!!
+class OrderedSet(MutableSet):
     def __init__(self, iterable=None):
         self.end = end = []
         end += [None, end, end]         # sentinel node for doubly linked list
@@ -18,23 +18,19 @@ class OrderedSet(collections.MutableSet):   # missing multi-threading protection
         return key in self.map
 
     def isEmpty(self):
-        return self.__len__() == 0
+        with self.lock:
+            return self.__len__() == 0
 
-    def append(self, key):      # append at rightmost position
-        self.lock.acquire()
-        if key not in self.map:
-            end = self.end
-            curr = end[1]
-            curr[2] = end[1] = self.map[key] = [key, curr, end]
-        self.lock.release()
+    def add(self, key):      # append at rightmost position
+        with self.lock:
+            if key not in self.map:
+                end = self.end
+                curr = end[1]
+                curr[2] = end[1] = self.map[key] = [key, curr, end]
 
     def discard(self, key):
-        self.lock.acquire()
-        if key in self.map:
-            key, prev, next = self.map.pop(key)
-            prev[2] = next
-            next[1] = prev
-        self.lock.release()
+        with self.lock:
+            self.__remove__(key)
 
     def __iter__(self):
         end = self.end
@@ -51,13 +47,19 @@ class OrderedSet(collections.MutableSet):   # missing multi-threading protection
             curr = curr[1]
 
     def pop(self):      # remove leftmost element
-        self.lock.acquire()
         if not self:
             raise KeyError('set is empty')
-        key = self.end[-1][0]
-        self.discard(key)
-        self.lock.release()
+
+        with self.lock:
+            key = self.end[-1][0]
+            self.__remove__(key)
         return key
+
+    def __remove__(self, key):
+        if key in self.map:
+            key, prev, next = self.map.pop(key)
+            prev[2] = next
+            next[1] = prev
 
     def __repr__(self):
         if not self:
