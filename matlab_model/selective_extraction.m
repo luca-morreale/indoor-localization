@@ -1,6 +1,5 @@
 function [ z, time ] = selective_extraction( track, estimated_position, P_hat, ...
-                                                basestation_positions, polling_delay, t, ...
-                                                flag_weight_measurement)
+                                                basestation_positions, polling_delay, t)
 % Starting from a time 't' this function polls all
 % sensor with a small delay between each request.
 % It just extract all position from 'track', incrementing
@@ -10,7 +9,7 @@ time = t;
 [sensor_size, N] = size(track);
 
 % extract the indexes of beacons, checking the distances 
-indexes = position_selector(estimated_position, P_hat, basestation_positions, 3, flag_weight_measurement);
+indexes = position_selector(estimated_position, P_hat, basestation_positions);
 
 z = zeros(sensor_size, 1);
 

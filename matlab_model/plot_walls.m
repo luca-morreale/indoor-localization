@@ -1,15 +1,13 @@
-function [] = plot_walls(X, beacons, sensor_size, radius, print_beacons_range)
+function [] = plot_walls(X, beacons, sensor_size, radius)
 %% plot the trajectory and sensors position
 figure;
 plot(X(:,1),X(:,2));
 hold on;
 plot(beacons(:,1),beacons(:,2), 'x');
 
-if print_beacons_range
-    t = linspace(0,2*pi);
-    for j=1:sensor_size
-        plot(radius*cos(t)+beacons(j,1),radius*sin(t)+beacons(j,2),'--');
-    end
+t = linspace(0,2*pi);
+for j=1:sensor_size
+    plot(radius*cos(t)+beacons(j,1),radius*sin(t)+beacons(j,2),'--');
 end
 
 
