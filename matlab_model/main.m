@@ -16,8 +16,8 @@ basestation_positions = [7.5, 3.5;   ...
                     ];
 
 beacons_radius = 7;
-sampling_time = 1;    % distance between each "polling cycle"
-var_z = 0.1;
+sampling_time = 0.45;    % distance between each "polling cycle"
+var_z = 1;
 
 
 %name_trajectory = 'easy2.mat';
