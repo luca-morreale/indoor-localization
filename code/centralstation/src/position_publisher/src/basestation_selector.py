@@ -7,7 +7,7 @@ class BasestationSelector(object):
         self.basestations = basestations
         self.sensor_size = len(basestations)
 
-    def selectBestPositions(self, estimated_cov_matrix, estimated_position):
+    def selectBestPositions(self, estimated_cov_matrix, estimated_position, size=5):
         estimated_cov_matrix_inv = invert(estimated_cov_matrix)
         distances = np.ones(self.sensor_size) * -1
         for i in range(self.sensor_size):
@@ -16,7 +16,7 @@ class BasestationSelector(object):
             distances[i] = multiply(difference, estimated_cov_matrix_inv, transpose(difference))
 
         valid_distances = self.sortWithIndeces(distances)
-        return [valid_distances[i][0] for i in range(0, min(3, len(valid_distances)))]
+        return [valid_distances[i][0] for i in range(0, min(size, len(valid_distances)))]
 
     def sortWithIndeces(self, list):
         sorted_tuples = sorted(enumerate(list), key=lambda x: x[1])

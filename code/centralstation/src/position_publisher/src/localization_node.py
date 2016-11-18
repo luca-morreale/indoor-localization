@@ -1,14 +1,13 @@
 #! /usr/bin/env python
 
 import rospy
-from geometry_msgs.msg import Point, Quaternion
-from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import Point, String, PointStamped
+
+from poller.basestation import Basestation
+from polller.json_handler import NoMeasurementException
 
 from model import Poly3
 from basestation_selector import BasestationSelector
-from ekf import EKF
-from basestation import Basestation
-from json_extractor import NoMeasurementException
 
 
 class LocalizationNode(object):
@@ -19,16 +18,15 @@ class LocalizationNode(object):
     EVERY_SECOND = 1
 
     def __init__(self):
-        rospy.init_node('position_publisher', anonymous=True)
+        rospy.init_node('tag_position_publisher', anonymous=True)
         self.rate = rospy.Rate(LocalizationNode.EVERY_SECOND)
+        self.basestations = []
         self.extractParams()
 
+        self.tag = rospy.get_param("/localization_node/tag")
         self.frame = '/target_' + str(self.tag)
+        self.ekf = EKF(self.tag, self.basestations, BasestationSelector(self.basestations), Poly3(LocalizationNode.COEFFS))
         self.publisher = rospy.Publisher(self.frame, PointStamped, queue_size=10)
-        self.model = Poly3(LocalizationNode.COEFFS)
-        self.selector = BasestationSelector(self.basestations)
-        self.ekf = EKF(self.tag, 1, 0.1, self.basestations, self.model, self.selector)
-        self.miss_counter = 2
 
     def extractParams(self):
         self.tag = rospy.get_param("/localization_node/tag")
@@ -36,17 +34,8 @@ class LocalizationNode(object):
         self.buildBasestation(stations)
 
     def buildBasestation(self, stations):
-        self.basestations = []
         for station in stations:
             self.basestations.append(Basestation(station[0], float(station[1]), float(station[2])))
-
-    def publishPosition(self, position):
-        msg = PointStamped()
-        msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = self.frame
-
-        msg.point = Point(position[0], position[1], 0)
-        self.publisher.publish(msg)
 
     def localizationLoop(self):
         while not rospy.is_shutdown():
@@ -55,7 +44,7 @@ class LocalizationNode(object):
                     self.rate = rospy.Rate(LocalizationNode.EVERY_MINUTE)  # once in a minute
                     position = self.ekf.setInitialPositionToCloserBasestation()
                 else:
-                    position = self.ekf.ekfIteration()
+                    position = self.ekf.pollingLoop()
 
                 self.publishPosition(position)
                 self.rate = rospy.Rate(LocalizationNode.EVERY_SECOND)  # normal rate
@@ -65,6 +54,16 @@ class LocalizationNode(object):
                 self.miss_counter += 1
 
             self.rate.sleep()
+
+    def publishPosition(self, position):
+        msg = PointStamped()
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = self.frame
+
+        msg.point = Point(position[0], position[1], 0)
+        self.publisher.publish(msg)
+        for basestation in self.basestations:
+            basestation.publishPosition()
 
 
 if __name__ == '__main__':
