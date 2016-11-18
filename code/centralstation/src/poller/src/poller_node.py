@@ -23,7 +23,7 @@ class Poller(object):
     def createCommunicators(self):
         self.client = Client(10019)
         self.measurements_publisher = rospy.Publisher('measurements', MeasurementList, queue_size=10)
-        self.request_subscriber = rospy.Subscriber("measurements_request", String, self.pushbackRequest)
+        self.request_subscriber = rospy.Subscriber('measurements_request', String, self.pushbackRequest)
 
     def extractBasestationFromParams(self):
         stations = rospy.get_param("/poller_node/basestations")
