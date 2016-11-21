@@ -13,6 +13,7 @@ class EKF(object):
         self.tag = tag
         self.model = model
         self.var_z = var_z
+        self.last_update = -1
         self.address_to_index = {}
         self.prediction_sequence = []
         self.basestations = basestations
@@ -47,7 +48,7 @@ class EKF(object):
 
     def createCommunicators(self):
         self.measurement_requester = rospy.Publisher('measurements_request', String, queue_size=10)
-        self.measurement_reciver = rospy.Subscriber('measurements', MeasurementList, self.updatePosition)
+        self.measurement_reciver = rospy.Subscriber('measurements', MeasurementList, self.receiveMeasurements)
 
     def generateBasestationDictionary(self):
         for i in range(len(self.basestations)):
@@ -61,20 +62,49 @@ class EKF(object):
     def indexOf(self, basestation_address):
         return self.address_to_index[basestation_address]
 
+    def getMeasurementFromList(self, list):
+        for pair in list:
+            if pair.tag == self.tag:
+                return pair.data
+
     ''' Update the estimated position using the data given in the measurements.
         ARGS:
             msg     ros topic message of type MeasurementList (look in poller package)
     '''
-    def updatePosition(self, msg):
+    def receiveMeasurements(self, msg):
         current_time = rospy.Time.now()
         id_station = self.indexOf(msg.basestation)
         if any(pair.data == self.tag for pair in msg.data):
-            dt = current_time - self.last_update
+            data = self.getMeasurementFromList(msg.data)
+            self.updatePosition(data, id_station, current_time)      # dt = update distance
             self.last_update = current_time
-            for pair in msg.data:
-                if pair.tag == self.tag:
-                    self.ekfIteration(pair.data, id_station, dt)
 
+    ''' Decide how update the position, initialize with a new one or perform a ekf iteration.
+        ARGS:
+            data            data received from the measurements.
+            id_station      index of the basestation that performed the measurements.
+            current_time    time of receiving the update.
+    '''
+    def updatePosition(self, data, id_station, current_time):
+        if self.last_update == -1:
+            self.initializePosition(self.basestations[id_station].position)
+        else:
+            self.ekfIteration(data, id_station, current_time - self.last_update)
+
+    ''' Initialize the position of the target at the position of the basestation that performed the measurements.
+        ARGS:
+            basestation_position       position of the basestation
+    '''
+    def initializePosition(self, basestation_position):
+        self.estimated_position[0] = basestation_position[0]
+        self.estimated_position[1] = basestation_position[1]
+
+    ''' Performs an iteration (prediction + correction) of ekf.
+        ARGS:
+            measurement     array containing the measurements.
+            id_station      index of the basestation that generated the measurements.
+            dt              distance from last update.
+    '''
     def ekfIteration(self, measurement, id_station, dt):
         self.createMatrixes(dt)
         measurements = np.zeros(self.sensor_size)
@@ -135,26 +165,7 @@ class EKF(object):
         return self.estimated_position
 
     def setInitialPositionToCloserBasestation(self):
-        pass
+        for station in self.basestations:
+            self.measurement_requester.publish(station.address)
         # a possibility is to poll all station and the with a flag start the ekf at second measurement
         # other possibilities?
-
-    '''
-    def setInitialPosition(self, init_pos):
-        self.initVariables()
-        self.estimated_position = np.zeros(4)
-        for i in range(0, 2):
-            self.estimated_position[i] = init_pos[i]
-        self.prediction_sequence.append(self.estimated_position)
-
-    def setInitialPositionToCloserBasestation(self):
-        closest = self.getCloserBasestation()
-        self.setInitialPosition(closest.position)
-        return self.estimated_position
-    '''
-    '''
-    def getCloserBasestation(self):
-        measurements = self.getAllMeasurements()
-        valid_basestations = self.selector.sortWithIndeces(measurements)
-        return self.basestations[valid_basestations[0][0]]
-    '''
