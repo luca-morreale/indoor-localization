@@ -1,4 +1,5 @@
 
+import operator
 import numpy as np
 
 import rospy
@@ -14,6 +15,8 @@ class EKF(object):
         self.model = model
         self.var_z = var_z
         self.last_update = -1
+        self.initial_pool = {}
+        self.init_pool_length = 0
         self.address_to_index = {}
         self.prediction_sequence = []
         self.basestations = basestations
@@ -54,6 +57,9 @@ class EKF(object):
         for i in range(len(self.basestations)):
             self.address_to_index[self.basestations[i].address] = i
 
+    def containsUsefulMeasurement(self, data):
+        return any(pair.data == self.tag for pair in data)
+
     ''' Returns the index of the given basestation address
         ARGS:
             basestation_address     string containing the address of the basestation
@@ -62,22 +68,24 @@ class EKF(object):
     def indexOf(self, basestation_address):
         return self.address_to_index[basestation_address]
 
-    def getMeasurementFromList(self, list):
-        for pair in list:
+    def getMeasurementFromList(self, pair_list):
+        for pair in pair_list:
             if pair.tag == self.tag:
                 return pair.data
+
+    def getDataFromMeasurementList(self, msg):
+        id_station = self.indexOf(msg.basestation)
+        data = self.getMeasurementFromList(msg.data)
+        return id_station, data
 
     ''' Update the estimated position using the data given in the measurements.
         ARGS:
             msg     ros topic message of type MeasurementList (look in poller package)
     '''
     def receiveMeasurements(self, msg):
-        current_time = rospy.Time.now()
-        id_station = self.indexOf(msg.basestation)
-        if any(pair.data == self.tag for pair in msg.data):
-            data = self.getMeasurementFromList(msg.data)
-            self.updatePosition(data, id_station, current_time)      # dt = update distance
-            self.last_update = current_time
+        if self.containsUsefulMeasurement(msg.data):
+            id_station, data = self.getDataFromMeasurementList(msg)
+            self.updatePosition(data, id_station, rospy.Time.now())
 
     ''' Decide how update the position, initialize with a new one or perform a ekf iteration.
         ARGS:
@@ -87,17 +95,26 @@ class EKF(object):
     '''
     def updatePosition(self, data, id_station, current_time):
         if self.last_update == -1:
-            self.initializePosition(self.basestations[id_station].position)
+            self.addMeasurementToInitialPool(id_station, data)
+            if self.init_pool_length == len(self.basestations):
+                self.setInitialPositionFromPool()
         else:
             self.ekfIteration(data, id_station, current_time - self.last_update)
 
-    ''' Initialize the position of the target at the position of the basestation that performed the measurements.
-        ARGS:
-            basestation_position       position of the basestation
+    def addMeasurementToInitialPool(self, id_station, data):
+        self.init_pool_length += 1
+        self.initial_pool[id_station] = data
+
     '''
-    def initializePosition(self, basestation_position):
-        self.estimated_position[0] = basestation_position[0]
-        self.estimated_position[1] = basestation_position[1]
+        Initialize the position of the target at the position of the basestation that performed the highest measurements.
+    '''
+    def setInitialPositionFromPool(self):
+        station_address = max(self.initial_pool.iteritems(), key=operator.itemgetter(1))[0]
+        self.initializePosition(self.indexOf(station_address))
+
+    def initializePosition(self, basestation_index):
+        self.estimated_position[0] = self.basestations[basestation_index].position[0]
+        self.estimated_position[1] = self.basestations[basestation_index].position[1]
 
     ''' Performs an iteration (prediction + correction) of ekf.
         ARGS:
@@ -159,13 +176,13 @@ class EKF(object):
         Returns the current estimated position.
     '''
     def pollingLoop(self):
-        indexes = self.basestation_selector.selectBestPositions(self.estimated_cov_matrix, self.estimated_position)
+        indexes = self.basestation_selector.selectBestPositions(self.cov_matrix, self.estimated_position)
         for i in indexes:
-            self.poller.publish(self.basestations[i])
+            self.measurement_requester.publish(self.basestations[i])
         return self.estimated_position
 
     def setInitialPositionToCloserBasestation(self):
         for station in self.basestations:
             self.measurement_requester.publish(station.address)
         # a possibility is to poll all station and the with a flag start the ekf at second measurement
-        # other possibilities?
+        # other possibilities? wait all measurements and the decide
