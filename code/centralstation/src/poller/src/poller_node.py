@@ -8,7 +8,6 @@ import socket
 
 from client import Client
 from orderedset import OrderedSet
-from basestation import Basestation
 from json_handler import containsMeasurements, extractJson
 
 
@@ -16,6 +15,7 @@ class Poller(object):
     def __init__(self):
         rospy.init_node('poller_node')
         self.rate = rospy.Rate(3)   # 3hz
+        self.debug = rospy.get_param("/poller_node/debug")
         self.extractBasestationFromParams()
         self.createCommunicators()
         self.request_list = OrderedSet([])
@@ -24,28 +24,35 @@ class Poller(object):
         self.client = Client(10019)
         self.measurements_publisher = rospy.Publisher('measurements', MeasurementList, queue_size=10)
         self.request_subscriber = rospy.Subscriber('measurements_request', String, self.pushbackRequest)
+        socket.settimeout(2.0)
 
     def extractBasestationFromParams(self):
         stations = rospy.get_param("/poller_node/basestations")
         self.storeBasestation(stations)
 
     def storeBasestation(self, stations):
-        self.basestations = []
+        self.basestations = frozenset()
         for station in stations:
-            self.basestations.append(Basestation(station[0], float(station[1]), float(station[2])))
+            self.basestations.add(station)
+
+    def debug_msg(self, msg):
+        if self.debug:
+            print msg
 
     def pushbackRequest(self, msg):
-        self.request_list.add(msg.data)
+        self.debug_msg('Arrived message: ' + str(msg))
+        if str(msg) in self.basestations:
+            self.request_list.add(msg.data)
+            self.debug_msg('Added to request ' + str(msg))
 
     def measurementsLoop(self):
         while not rospy.is_shutdown():
             while not self.request_list.isEmpty():
                 station_address = self.request_list.pop()
+                self.debug_msg('Serving request: ' + str(station_address))
                 self.serveRequest(station_address)
+            self.debug_msg('Empty list')
             self.rate.sleep()
-
-    def pollStation(self, station_address):
-        return self.client.pollBasestation(station_address)
 
     def serveRequest(self, station_address):
         try:
@@ -55,12 +62,16 @@ class Poller(object):
         except socket.error:
             pass
 
+    def pollStation(self, station_address):
+        return self.client.pollBasestation(station_address)
+
     def publishMeasuements(self, measurs, station):
         msg = MeasurementList()
         for el in measurs:
             msg.data.append(self.generateMeasurement(el))
         msg.basestation = station
         msg.header.stamp = rospy.Time.now()
+        self.debug_msg('Publishing measurement: ' + str(msg))
         self.measurements_publisher.publish(msg)
 
     def generateMeasurement(self, element):
