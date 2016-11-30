@@ -3,15 +3,20 @@
   <!-- Run localization node -->
   <node name="localization_node" pkg="position_publisher" type="localization_node.py" output="screen">
     <rosparam param="tag">2022</rosparam>
+    <rosparam param="var_z">1</rosparam>
+    <rosparam param="debug">True</rosparam>
+    <rosparam param="max_selection">7</rosparam>
     <rosparam param="basestations">
         [
-            ['192.168.1.19', 2, -1],
-            ['192.168.1.11', 2, 1]
+            ['192.168.1.17', -2, -2.1],
+            ['192.168.1.11', -2, 2.6],
+            ['192.168.1.19', 4.10, 1.15],
+            ['192.168.1.20', 1.95, 8.25]
         ]
     </rosparam>
   </node>
 
   <node pkg="tf" type="static_transform_publisher" name="tag_publisher" args="0 0 0 0 0 0 /map /target_2022 100"/>
-
+  <node pkg="tf" type="static_transform_publisher" name="basestation_publisher" args="0 0 0 0 0 0 /map /basestation 100"/>
 
 </launch>
