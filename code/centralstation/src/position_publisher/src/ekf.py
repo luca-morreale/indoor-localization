@@ -177,9 +177,9 @@ class EKF(object):
         Returns the current estimated position.
     '''
     def pollingLoop(self):
-        indexes = self.basestation_selector.selectBestPositions(self.cov_matrix, self.estimated_position)
+        indexes = self.basestation_selector(self.basestations, self.cov_matrix, self.estimated_position, self.max_station_selection)
         for i in indexes:
-            self.measurement_requester.publish(self.basestations[i])
+            self.measurement_requester.publish(self.basestations[i].address)
         return self.estimated_position
 
     def setInitialPositionToCloserBasestation(self):
