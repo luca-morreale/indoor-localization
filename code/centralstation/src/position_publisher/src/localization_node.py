@@ -1,13 +1,15 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 import rospy
-from geometry_msgs.msg import Point, String, PointStamped
+from std_msgs.msg import String
+from geometry_msgs.msg import Point, PointStamped
 
-from poller.basestation import Basestation
-from polller.json_handler import NoMeasurementException
-
+from ekf import EKF
 from model import Poly3
+from basestation import Basestation
 from basestation_selector import BasestationSelector
+from measurement_exception import NoMeasurementException
+
 
 
 class LocalizationNode(object):
@@ -23,13 +25,14 @@ class LocalizationNode(object):
         self.basestations = []
         self.extractParams()
 
-        self.tag = rospy.get_param("/localization_node/tag")
+        self.miss_counter = 2
         self.frame = '/target_' + str(self.tag)
-        self.ekf = EKF(self.tag, self.basestations, BasestationSelector(self.basestations), Poly3(LocalizationNode.COEFFS))
+        self.ekf = EKF(self.tag, self.basestations, BasestationSelector(self.basestations), Poly3(LocalizationNode.COEFFS), self.var_z)
         self.publisher = rospy.Publisher(self.frame, PointStamped, queue_size=10)
 
     def extractParams(self):
         self.tag = rospy.get_param("/localization_node/tag")
+        self.var_z = rospy.get_param("/localization_node/var_z")
         stations = rospy.get_param("/localization_node/basestations")
         self.buildBasestation(stations)
 
