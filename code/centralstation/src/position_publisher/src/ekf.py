@@ -36,6 +36,7 @@ class EKF(object):
             dt      distance in time wrt last update
     '''
     def createMatrixes(self, dt):
+        self.estimated_position = np.zeros(4)
         # observation covariance
         self.R = np.eye(N=self.sensor_size, M=self.sensor_size) * self.var_z
         # process noise covariance
@@ -58,7 +59,7 @@ class EKF(object):
             self.address_to_index[self.basestations[i].address] = i
 
     def containsUsefulMeasurement(self, data):
-        return any(pair.data == self.tag for pair in data)
+        return any(str(pair.tag) == str(self.tag) for pair in data)
 
     ''' Returns the index of the given basestation address
         ARGS:
@@ -70,8 +71,8 @@ class EKF(object):
 
     def getMeasurementFromList(self, pair_list):
         for pair in pair_list:
-            if pair.tag == self.tag:
-                return pair.data
+            if str(pair.tag) == str(self.tag):
+                return pair.measurement
 
     def getDataFromMeasurementList(self, msg):
         id_station = self.indexOf(msg.basestation)
