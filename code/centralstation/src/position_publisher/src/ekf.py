@@ -191,5 +191,6 @@ class EKF(object):
     def setInitialPositionToCloserBasestation(self):
         for station in self.basestations:
             self.measurement_requester.publish(station.address)
+        return self.estimated_position
         # a possibility is to poll all station and the with a flag start the ekf at second measurement
         # other possibilities? wait all measurements and the decide
