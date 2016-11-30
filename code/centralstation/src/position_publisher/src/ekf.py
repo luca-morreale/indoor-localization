@@ -10,7 +10,7 @@ from poller.msg import MeasurementList
 from matrix_operations import transpose, invert, multiply
 
 class EKF(object):
-    def __init__(self, tag, basestations, basestation_selector, model, var_z):
+    def __init__(self, tag, basestations, basestation_selector, model, var_z, max_station_selection):
         self.tag = tag
         self.model = model
         self.var_z = var_z
@@ -22,6 +22,7 @@ class EKF(object):
         self.basestations = basestations
         self.sensor_size = len(basestations)
         self.basestation_selector = basestation_selector
+        self.max_station_selection = max_station_selection
 
         self.initMatrixes()
         self.createCommunicators()
@@ -97,10 +98,14 @@ class EKF(object):
     def updatePosition(self, data, id_station, current_time):
         if self.last_update == -1:
             self.addMeasurementToInitialPool(id_station, data)
-            if self.init_pool_length == len(self.basestations):
-                self.setInitialPositionFromPool()
+            if self.init_pool_length >= self.max_station_selection:
+                self.setInitialPositionFromPool(current_time)
         else:
             self.ekfIteration(data, id_station, current_time - self.last_update)
+            self.updateTime(current_time)
+
+    def updateTime(self, current_time):
+        self.last_update = current_time
 
     def addMeasurementToInitialPool(self, id_station, data):
         self.init_pool_length += 1
