@@ -14,7 +14,7 @@ def extractFirstRSSI(data):
         raise NoMeasurementException("")
 
     beacons = json.loads(data)
-    return beacons["beacons"][0]["rssi"]
+    return beacons["beacons"][0]["rssid"]
 
 
 def extractRSSIForTag(data, tag):
