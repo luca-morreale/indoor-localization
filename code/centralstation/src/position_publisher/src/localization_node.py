@@ -7,7 +7,7 @@ from geometry_msgs.msg import Point, PointStamped
 from ekf import EKF
 from model import Poly3
 from basestation import Basestation
-from basestation_selector import BasestationSelector
+from basestation_selector import selectBestPositions
 from measurement_exception import NoMeasurementException
 
 
@@ -24,15 +24,16 @@ class LocalizationNode(object):
         self.rate = rospy.Rate(LocalizationNode.EVERY_SECOND)
         self.basestations = []
         self.extractParams()
-
         self.miss_counter = 2
         self.frame = '/target_' + str(self.tag)
-        self.ekf = EKF(self.tag, self.basestations, BasestationSelector(self.basestations), Poly3(LocalizationNode.COEFFS), self.var_z)
+        self.ekf = EKF(self.tag, self.basestations, selectBestPositions, Poly3(LocalizationNode.COEFFS), self.var_z, self.max_selection)
         self.publisher = rospy.Publisher(self.frame, PointStamped, queue_size=10)
 
     def extractParams(self):
         self.tag = rospy.get_param("/localization_node/tag")
         self.var_z = rospy.get_param("/localization_node/var_z")
+        self.debug = rospy.get_param("/localization_node/debug")
+        self.max_selection = rospy.get_param("/localization_node/max_selection")
         stations = rospy.get_param("/localization_node/basestations")
         self.buildBasestation(stations)
 
