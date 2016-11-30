@@ -15,8 +15,7 @@ class Poller(object):
     def __init__(self):
         rospy.init_node('poller_node')
         self.rate = rospy.Rate(3)   # 3hz
-        self.debug = rospy.get_param("/poller_node/debug")
-        self.extractBasestationFromParams()
+        self.extractParams()
         self.createCommunicators()
         self.request_list = OrderedSet([])
 
@@ -25,6 +24,10 @@ class Poller(object):
         self.measurements_publisher = rospy.Publisher('measurements', MeasurementList, queue_size=10)
         self.request_subscriber = rospy.Subscriber('measurements_request', String, self.pushbackRequest)
         socket.settimeout(2.0)
+
+    def extractParams(self):
+        self.debug = rospy.get_param("/poller_node/debug")
+        self.extractBasestationFromParams()
 
     def extractBasestationFromParams(self):
         stations = rospy.get_param("/poller_node/basestations")
