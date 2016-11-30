@@ -114,9 +114,10 @@ class EKF(object):
     '''
         Initialize the position of the target at the position of the basestation that performed the highest measurements.
     '''
-    def setInitialPositionFromPool(self):
+    def setInitialPositionFromPool(self, current_time):
         station_address = max(self.initial_pool.iteritems(), key=operator.itemgetter(1))[0]
         self.initializePosition(self.indexOf(station_address))
+        self.updateTime(current_time)
 
     def initializePosition(self, basestation_index):
         self.estimated_position[0] = self.basestations[basestation_index].position[0]
