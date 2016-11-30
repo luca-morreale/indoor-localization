@@ -3,7 +3,7 @@ import operator
 import numpy as np
 
 import rospy
-from geometry_msgs.msg import String
+from std_msgs.msg import String
 
 from poller.msg import MeasurementList
 
