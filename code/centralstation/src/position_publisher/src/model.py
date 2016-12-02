@@ -5,7 +5,7 @@ class Model(object):
     def __init__(self, coeffs):
         self.coeffs = coeffs
 
-    def spaceToValue(self, distance):
+    def value(self, distance):
         pass
 
     def derivative(self, distance):
@@ -16,7 +16,7 @@ class Poly3(Model):
     def __init__(self, coeffs):
         Model.__init__(self, coeffs)
 
-    def spaceToValue(self, distance):
+    def value(self, distance):
         quad_distance = np.dot(distance, distance)
         abs_distance = np.sqrt(quad_distance)
         return self.coeffs[0] * (abs_distance ** 3) + self.coeffs[1] * (abs_distance ** 2) + self.coeffs[2] * abs_distance + self.coeffs[3]
@@ -33,7 +33,7 @@ class Poly2(Model):
     def __init__(self, coeffs):
         Model.__init__(self, coeffs)
 
-    def spaceToValue(self, distance):
+    def value(self, distance):
         quad_distance = np.dot(distance, distance)
         abs_distance = np.sqrt(quad_distance)
         return self.coeffs[0] * abs_distance ** 2 + self.coeffs[1] * abs_distance + self.coeffs[2]

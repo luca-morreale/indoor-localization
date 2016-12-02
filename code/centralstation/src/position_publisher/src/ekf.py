@@ -159,7 +159,7 @@ class EKF(object):
         h = np.zeros(self.sensor_size)
         for i in range(0, self.sensor_size):
             if measurements[i] != 0:
-                h[i] = self.model.spaceToValue(self.estimated_position[0:2] - self.basestations[i].position)
+                h[i] = self.model.value(self.estimated_position[0:2] - self.basestations[i].position)
 
         H = np.empty((0, 4))
         for i in range(0, len(measurements)):
@@ -200,5 +200,3 @@ class EKF(object):
         for station in self.basestations:
             self.measurement_requester.publish(station.address)
         return self.estimated_position
-        # a possibility is to poll all station and the with a flag start the ekf at second measurement
-        # other possibilities? wait all measurements and the decide
