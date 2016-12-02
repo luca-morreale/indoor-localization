@@ -91,8 +91,10 @@ class EKF(object):
             msg     ros topic message of type MeasurementList (look in poller package)
     '''
     def receiveMeasurements(self, msg):
-        if self.containsUsefulMeasurement(msg.data):
+        self.debug_msg('Arrived a new message:' + str(msg))
+        if self.containsUsefulMeasurement(msg.data, msg.basestation):
             id_station, data = self.getDataFromMeasurementList(msg)
+            self.debug_msg('contains usefull:' + id_station + ' ' + data)
             self.updatePosition(data, id_station, rospy.Time.now())
 
     ''' Decide how update the position, initialize with a new one or perform a ekf iteration.
