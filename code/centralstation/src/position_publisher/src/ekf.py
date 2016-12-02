@@ -94,7 +94,7 @@ class EKF(object):
         self.debug_msg('Arrived a new message:' + str(msg))
         if self.containsUsefulMeasurement(msg.data, msg.basestation):
             id_station, data = self.getDataFromMeasurementList(msg)
-            self.debug_msg('contains usefull:' + id_station + ' ' + data)
+            self.debug_msg('contains usefull:' + str(id_station) + ' ' + str(data))
             self.updatePosition(data, id_station, rospy.Time.now())
 
     ''' Decide how update the position, initialize with a new one or perform a ekf iteration.
