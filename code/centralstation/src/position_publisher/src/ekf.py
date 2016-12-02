@@ -175,7 +175,7 @@ class EKF(object):
         residual_covariance = multiply(H, estimated_cov_matrix, transpose(H)) + self.R
         kalman_gain = multiply(estimated_cov_matrix, transpose(H), invert(residual_covariance))
 
-        self.estimated_position = self.estimated_position + multiply(kalman_gain * measurement_residual)
+        self.estimated_position = self.estimated_position + multiply(kalman_gain, measurement_residual)
         self.cov_matrix = multiply((np.eye(N=4) - multiply(kalman_gain, H)), estimated_cov_matrix)
         self.prediction_sequence.append(transpose(self.estimated_position))
 
