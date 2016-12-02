@@ -43,7 +43,7 @@ class Poller(object):
 
     def pushbackRequest(self, msg):
         self.debug_msg('Arrived message: ' + str(msg))
-        if str(msg) in self.basestations:
+        if str(msg.data) in self.basestations:
             self.request_list.add(msg.data)
             self.debug_msg('Added to request ' + str(msg))
 
