@@ -17,6 +17,7 @@ class Client():
     def poll(address, port):
         #Create a TCP/IP socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2.0)
 
         #Connect the socket to server
         #server_address = (SERVER_IP_ADDR, SERVER_PORT) #the address is defined as a pair (host,port)

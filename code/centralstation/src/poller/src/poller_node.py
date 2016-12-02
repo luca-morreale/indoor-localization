@@ -23,7 +23,6 @@ class Poller(object):
         self.client = Client(10019)
         self.measurements_publisher = rospy.Publisher('measurements', MeasurementList, queue_size=10)
         self.request_subscriber = rospy.Subscriber('measurements_request', String, self.pushbackRequest)
-        socket.settimeout(2.0)
 
     def extractParams(self):
         self.debug = rospy.get_param("/poller_node/debug")
