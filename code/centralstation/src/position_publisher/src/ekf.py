@@ -59,8 +59,9 @@ class EKF(object):
         for i in range(len(self.basestations)):
             self.address_to_index[self.basestations[i].address] = i
 
-    def containsUsefulMeasurement(self, data):
-        return any(str(pair.tag) == str(self.tag) for pair in data)
+    def containsUsefulMeasurement(self, data, station_address):
+        return any(str(pair.tag) == str(self.tag) for pair in data) \
+                    and station_address in self.address_to_index.keys()
 
     ''' Returns the index of the given basestation address
         ARGS:
