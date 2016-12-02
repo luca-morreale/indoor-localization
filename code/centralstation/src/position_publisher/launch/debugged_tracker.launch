@@ -1,0 +1,21 @@
+<launch>
+
+  <!-- Run localization node -->
+  <node name="localization_node" pkg="position_publisher" type="debugged_localization_node.py" output="screen">
+    <rosparam param="tag">2022</rosparam>
+    <rosparam param="var_z">1</rosparam>
+    <rosparam param="debug">True</rosparam>
+    <rosparam param="max_selection">2</rosparam>
+    <rosparam param="alpha">0.5</rosparam>
+    <rosparam param="basestations">
+        [
+            ['192.168.1.17', 0, 1],
+            ['192.168.1.20', 0, -1]
+        ]
+    </rosparam>
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="tag_publisher" args="0 0 0 0 0 0 /map /target_2022 100"/>
+  <node pkg="tf" type="static_transform_publisher" name="basestation_publisher" args="0 0 0 0 0 0 /map /basestation 100"/>
+
+</launch>
