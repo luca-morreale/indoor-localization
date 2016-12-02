@@ -130,7 +130,7 @@ class EKF(object):
             dt              distance from last update.
     '''
     def ekfIteration(self, measurement, id_station, dt):
-        self.createMatrixes(dt)
+        self.createMatrixes(dt.to_sec())
         measurements = np.zeros(self.sensor_size)
         measurements[id_station] = measurement
         H, h, estimated_cov_matrix = self.prediction(measurements)
