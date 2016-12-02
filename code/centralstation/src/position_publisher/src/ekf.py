@@ -10,8 +10,9 @@ from poller.msg import MeasurementList
 from matrix_operations import transpose, invert, multiply
 
 class EKF(object):
-    def __init__(self, tag, basestations, basestation_selector, model, var_z, max_station_selection):
+    def __init__(self, tag, basestations, basestation_selector, model, var_z, max_station_selection, debug=False):
         self.tag = tag
+        self.debug = debug
         self.model = model
         self.var_z = var_z
         self.last_update = -1
@@ -58,6 +59,10 @@ class EKF(object):
     def generateBasestationDictionary(self):
         for i in range(len(self.basestations)):
             self.address_to_index[self.basestations[i].address] = i
+
+    def debug_msg(self, msg):
+        if self.debug:
+            print msg
 
     def containsUsefulMeasurement(self, data, station_address):
         return any(str(pair.tag) == str(self.tag) for pair in data) \
