@@ -5,13 +5,11 @@
     <rosparam param="tag">2022</rosparam>
     <rosparam param="var_z">1</rosparam>
     <rosparam param="debug">True</rosparam>
-    <rosparam param="max_selection">7</rosparam>
+    <rosparam param="max_selection">2</rosparam>
     <rosparam param="basestations">
         [
-            ['192.168.1.17', -2, -2.1],
-            ['192.168.1.11', -2, 2.6],
-            ['192.168.1.19', 4.10, 1.15],
-            ['192.168.1.20', 1.95, 8.25]
+            ['192.168.1.17', 0, 1],
+            ['192.168.1.20', 0, -1]
         ]
     </rosparam>
   </node>
