@@ -33,7 +33,7 @@ class Poller(object):
         self.storeBasestation(stations)
 
     def storeBasestation(self, stations):
-        self.basestations = frozenset()
+        self.basestations = set()
         for station in stations:
             self.basestations.add(station)
 
