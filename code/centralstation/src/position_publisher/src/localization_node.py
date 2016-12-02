@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import rospy
-from std_msgs.msg import String
 from geometry_msgs.msg import Point, PointStamped
 
 from ekf import EKF
@@ -26,7 +25,7 @@ class LocalizationNode(object):
         self.extractParams()
         self.miss_counter = 2
         self.frame = '/target_' + str(self.tag)
-        self.ekf = EKF(self.tag, self.basestations, selectBestPositions, Poly3(LocalizationNode.COEFFS), self.var_z, self.max_selection)
+        self.ekf = EKF(self.tag, self.basestations, selectBestPositions, Poly3(LocalizationNode.COEFFS), self.var_z, self.max_selection, self.debug)
         self.publisher = rospy.Publisher(self.frame, PointStamped, queue_size=10)
 
     def extractParams(self):
