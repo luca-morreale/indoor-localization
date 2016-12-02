@@ -73,7 +73,7 @@ class Poller(object):
             msg.data.append(self.generateMeasurement(el))
         msg.basestation = station
         msg.header.stamp = rospy.Time.now()
-        self.debug_msg('Publishing measurement: ' + str(msg))
+        self.debug_msg('Publishing measurement for ' + str(station))
         self.measurements_publisher.publish(msg)
 
     def generateMeasurement(self, element):
