@@ -17,13 +17,14 @@ class MeasurementsDebugNode(object):
         self.address_to_index = {}
         self.extractParams()
         self.generateBasestationDictionary()
-        self.debugger = CircumferencePublisher(Poly3([-0.0001769, 0.01364, -0.4367, 6.111]), self.tag_color)
+        self.debugger = CircumferencePublisher(Poly3(self.debug_function_param), self.tag_color)
         self.measurement_reciver = rospy.Subscriber('/measurements', MeasurementList, self.receiveMeasurements)
 
     def extractParams(self):
         self.alpha = rospy.get_param("/debug_node/alpha")
         colors = rospy.get_param("/debug_node/colors")
-        stations = rospy.get_param("/localization_node/basestations")
+        stations = rospy.get_param("/debug_node/basestations")
+        self.debug_function_param = rospy.get_param("/debug_node/debug_model")
         self.buildColorsFrom(colors)
         self.buildBasestationFrom(stations)
         self.generateBasestationDictionary()

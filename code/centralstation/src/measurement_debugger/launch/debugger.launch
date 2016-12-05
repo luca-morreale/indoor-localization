@@ -3,6 +3,7 @@
   <!-- Run localization node -->
   <node name="debug_node" pkg="measurement_debugger" type="debug_node.py" output="screen">
     <rosparam param="alpha">0.5</rosparam>
+    <rosparam param="debug_model">[-0.0001769, 0.01364, -0.4367, 6.111]</rosparam>
     <rosparam param="basestations">
         [
             ['192.168.1.17', 0, 0.5],
