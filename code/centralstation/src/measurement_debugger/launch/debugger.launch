@@ -1,0 +1,21 @@
+<launch>
+
+  <!-- Run localization node -->
+  <node name="debug_node" pkg="measurement_debugger" type="debug_node.py" output="screen">
+    <rosparam param="alpha">0.5</rosparam>
+    <rosparam param="basestations">
+        [
+            ['192.168.1.17', 0, 0.5],
+            ['192.168.1.20', 0, -0.5]
+        ]
+    </rosparam>
+    <rosparam param="colors">
+        [
+            ['2022', 0, 1, 0]
+        ]
+    </rosparam>
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="debug_publisher" args="0 0 0 0 0 0 /map /measurements_debug 100"/>
+
+</launch>
