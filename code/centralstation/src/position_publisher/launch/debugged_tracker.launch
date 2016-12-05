@@ -4,6 +4,7 @@
   <node name="localization_node" pkg="position_publisher" type="debugged_localization_node.py" output="screen">
     <rosparam param="tag">2022</rosparam>
     <rosparam param="var_z">1</rosparam>
+    <rosparam param="function_model">[-0.1416, 2.311, -14.76, 36.79]</rosparam>
     <rosparam param="debug">True</rosparam>
     <rosparam param="max_selection">2</rosparam>
     <rosparam param="alpha">0.5</rosparam>

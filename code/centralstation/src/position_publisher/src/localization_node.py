@@ -12,8 +12,6 @@ from measurement_exception import NoMeasurementException
 
 
 class LocalizationNode(object):
-    # model in meters
-    COEFFS = [-0.1416, 2.311, -14.76, 36.79]
 
     EVERY_MINUTE = 0.1667
     EVERY_SECOND = 1
@@ -25,7 +23,7 @@ class LocalizationNode(object):
         self.extractParams()
         self.miss_counter = 2
         self.frame = '/target_' + str(self.tag)
-        self.ekf = EKF(self.tag, self.basestations, selectBestPositions, Poly3(LocalizationNode.COEFFS), self.var_z, self.max_selection, self.debug)
+        self.ekf = EKF(self.tag, self.basestations, selectBestPositions, Poly3(self.model_function), self.var_z, self.max_selection, self.debug)
         self.publisher = rospy.Publisher(self.frame, PointStamped, queue_size=10)
 
     def extractParams(self):
@@ -33,6 +31,7 @@ class LocalizationNode(object):
         self.var_z = rospy.get_param("/localization_node/var_z")
         self.debug = rospy.get_param("/localization_node/debug")
         self.max_selection = rospy.get_param("/localization_node/max_selection")
+        self.model_function = rospy.get_param("/localization_node/function_model")
         stations = rospy.get_param("/localization_node/basestations")
         self.buildBasestation(stations)
 
