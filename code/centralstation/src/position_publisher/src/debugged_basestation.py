@@ -1,5 +1,33 @@
 
-from basestation import Basestation
+import numpy as np
+
+import rospy
+from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import Point, Quaternion
+
+
+class Basestation(object):
+    def __init__(self, address, x, y):
+        self.address = address
+        self.position = np.array([x, y])
+        self.frame = "basestation"
+        self.station_id = address.split('.', 4)[-1]
+        self.custom_frame = self.frame + '_' + self.station_id
+        self.publisher = rospy.Publisher(self.frame, PointStamped, queue_size=10)
+
+    def distanceTo(self, x, y):
+        self.distance(np.array([x, y]))
+
+    def distance(self, obj_pos):
+        return np.sqrt(self.position * obj_pos)
+
+    def publishPosition(self):
+        msg = PointStamped()
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = self.frame
+
+        msg.point = Point(self.position[0], self.position[1], 0)
+        self.publisher.publish(msg)
 
 class BasestationDebug(Basestation):
     def __init__(self, address, x, y, debugger):
@@ -7,4 +35,4 @@ class BasestationDebug(Basestation):
         self.debugger = debugger
 
     def publishMarker(self, measurement, tag):
-        self.debugger.publish_shape(self.position, measurement, tag, self.custom_frame)
+        self.debugger.publishShape(self.position, measurement, tag, self.custom_frame)
