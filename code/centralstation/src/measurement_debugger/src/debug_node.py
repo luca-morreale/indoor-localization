@@ -17,7 +17,6 @@ class MeasurementsDebugNode(object):
         self.address_to_index = {}
         self.extractParams()
         self.generateBasestationDictionary()
-        print self.tag_color
         self.debugger = CircumferencePublisher(Poly3([-0.0001769, 0.01364, -0.4367, 6.111]), self.tag_color)
         self.measurement_reciver = rospy.Subscriber('/measurements', MeasurementList, self.receiveMeasurements)
 
