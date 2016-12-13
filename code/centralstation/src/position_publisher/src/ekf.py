@@ -1,46 +1,33 @@
 
-import operator
 import numpy as np
-
-import rospy
-from std_msgs.msg import String
-
-from poller.msg import MeasurementList
 
 from matrix_operations import transpose, invert, multiply
 
+
 class EKF(object):
-    def __init__(self, tag, basestations, basestation_selector, model, var_z, max_station_selection, debug=False):
-        self.tag = tag
-        self.debug = debug
+    def __init__(self, basestations, basestation_selector, model, measurement_variance, measurement_weight, max_station_selection):
         self.model = model
-        self.var_z = var_z
-        self.last_update = -1
-        self.initial_pool = {}
-        self.init_pool_length = 0
-        self.address_to_index = {}
-        self.prediction_sequence = []
+        self.measurement_variance = measurement_variance
+        self.measurement_weight = measurement_weight
         self.basestations = basestations
         self.sensor_size = len(basestations)
         self.basestation_selector = basestation_selector
         self.max_station_selection = max_station_selection
 
         self.initMatrixes()
-        self.createCommunicators()
-        self.generateBasestationDictionary()
 
     def initMatrixes(self):
-        self.createMatrixes(0.4)
+        self.estimated_position = np.zeros(4)
+        self.createMatrixes(0.4, 31)
         self.cov_matrix = self.Q
 
     ''' Creates observation covariance matrix, process noise covariance matrix and state transition model matrix
         ARGS:
             dt      distance in time wrt last update
     '''
-    def createMatrixes(self, dt):
-        self.estimated_position = np.zeros(4)
+    def createMatrixes(self, dt, measurement):
         # observation covariance
-        self.R = np.eye(N=self.sensor_size, M=self.sensor_size) * self.var_z
+        self.R = np.eye(N=self.sensor_size, M=self.sensor_size) * self.measurement_variance
         # process noise covariance
         self.Q = np.array([[dt ** 3 / 3, 0, dt ** 2 / 2, 0],
                            [0, dt ** 3 / 3, 0, dt ** 2 / 2],
@@ -52,85 +39,6 @@ class EKF(object):
                            [0, 0, 1, 0],
                            [0, 0, 0, 1]])
 
-    def createCommunicators(self):
-        self.measurement_requester = rospy.Publisher('measurements_request', String, queue_size=10)
-        self.measurement_reciver = rospy.Subscriber('measurements', MeasurementList, self.receiveMeasurements)
-
-    def generateBasestationDictionary(self):
-        for i in range(len(self.basestations)):
-            self.address_to_index[self.basestations[i].address] = i
-
-    def debug_msg(self, msg):
-        if self.debug:
-            print msg
-
-    def containsUsefulMeasurement(self, data, station_address):
-        return any(str(pair.tag) == str(self.tag) for pair in data) \
-                    and station_address in self.address_to_index.keys()
-
-    ''' Returns the index of the given basestation address
-        ARGS:
-            basestation_address     string containing the address of the basestation
-        Return an integer
-    '''
-    def indexOf(self, basestation_address):
-        return self.address_to_index[basestation_address]
-
-    def getMeasurementFromList(self, pair_list):
-        for pair in pair_list:
-            if str(pair.tag) == str(self.tag):
-                return pair.measurement
-
-    def getDataFromMeasurementList(self, msg):
-        id_station = self.indexOf(msg.basestation)
-        data = self.getMeasurementFromList(msg.data)
-        return id_station, data
-
-    ''' Update the estimated position using the data given in the measurements.
-        ARGS:
-            msg     ros topic message of type MeasurementList (look in poller package)
-    '''
-    def receiveMeasurements(self, msg):
-        self.debug_msg('Arrived a new message:' + str(msg))
-        if self.containsUsefulMeasurement(msg.data, msg.basestation):
-            id_station, data = self.getDataFromMeasurementList(msg)
-            self.debug_msg('contains usefull:' + str(id_station) + ' ' + str(data))
-            self.updatePosition(data, id_station, rospy.Time.now())
-
-    ''' Decide how update the position, initialize with a new one or perform a ekf iteration.
-        ARGS:
-            data            data received from the measurements.
-            id_station      index of the basestation that performed the measurements.
-            current_time    time of receiving the update.
-    '''
-    def updatePosition(self, data, id_station, current_time):
-        if self.last_update == -1:
-            self.addMeasurementToInitialPool(id_station, data)
-            if self.init_pool_length >= self.max_station_selection:
-                self.setInitialPositionFromPool(current_time)
-        else:
-            self.ekfIteration(data, id_station, current_time - self.last_update)
-            self.updateTime(current_time)
-
-    def updateTime(self, current_time):
-        self.last_update = current_time
-
-    def addMeasurementToInitialPool(self, id_station, data):
-        self.init_pool_length += 1
-        self.initial_pool[id_station] = data
-
-    '''
-        Initialize the position of the target at the position of the basestation that performed the highest measurements.
-    '''
-    def setInitialPositionFromPool(self, current_time):
-        station_index = max(self.initial_pool.iteritems(), key=operator.itemgetter(1))[0]
-        self.initializePosition(station_index)
-        self.updateTime(current_time)
-
-    def initializePosition(self, basestation_index):
-        self.estimated_position[0] = self.basestations[basestation_index].position[0]
-        self.estimated_position[1] = self.basestations[basestation_index].position[1]
-
     ''' Performs an iteration (prediction + correction) of ekf.
         ARGS:
             measurement     array containing the measurements.
@@ -138,9 +46,9 @@ class EKF(object):
             dt              distance from last update.
     '''
     def ekfIteration(self, measurement, id_station, dt):
-        self.createMatrixes(dt.to_sec())
+        self.createMatrixes(dt.to_sec(), measurement)
         measurements = np.zeros(self.sensor_size)
-        measurements[id_station] = measurement
+        measurements[id_station] = measurement - self.measurement_weight.value(measurement)
         H, h, estimated_cov_matrix = self.prediction(measurements)
         self.correction(H, h, measurements, estimated_cov_matrix)
 
@@ -185,18 +93,3 @@ class EKF(object):
 
         self.estimated_position = self.estimated_position + multiply(kalman_gain, measurement_residual)
         self.cov_matrix = multiply((np.eye(N=4) - multiply(kalman_gain, H)), estimated_cov_matrix)
-        self.prediction_sequence.append(transpose(self.estimated_position))
-
-    ''' Generate the list of the possible basestation to poll for measurements.
-        Returns the current estimated position.
-    '''
-    def pollingLoop(self):
-        indexes = self.basestation_selector(self.basestations, self.cov_matrix, self.estimated_position, self.max_station_selection)
-        for i in indexes:
-            self.measurement_requester.publish(self.basestations[i].address)
-        return self.estimated_position
-
-    def setInitialPositionToCloserBasestation(self):
-        for station in self.basestations:
-            self.measurement_requester.publish(station.address)
-        return self.estimated_position
