@@ -8,6 +8,9 @@ class Model(object):
     def value(self, distance):
         pass
 
+    def d(self, abs_distance, val):
+        pass
+
     def derivative(self, distance):
         pass
 
