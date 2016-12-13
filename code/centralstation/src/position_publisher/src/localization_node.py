@@ -3,27 +3,26 @@
 import rospy
 from geometry_msgs.msg import Point, PointStamped
 
-from ekf import EKF
-from model import Poly3
+from ros_ekf import ROSEKF
+from model import Poly3, Poly5
 from basestation import Basestation
 from basestation_selector import selectBestPositions
-from measurement_exception import NoMeasurementException
-
 
 
 class LocalizationNode(object):
 
     EVERY_MINUTE = 0.1667
     EVERY_SECOND = 1
+    EVERY_THREE_SECONDS = 3
 
     def __init__(self):
         rospy.init_node('tag_position_publisher', anonymous=True)
         self.rate = rospy.Rate(LocalizationNode.EVERY_SECOND)
         self.basestations = []
         self.extractParams()
-        self.miss_counter = 2
         self.frame = '/target_' + str(self.tag)
-        self.ekf = EKF(self.tag, self.basestations, selectBestPositions, Poly3(self.model_function), self.var_z, self.max_selection, self.debug)
+        self.ekf = ROSEKF(self.tag, self.basestations, selectBestPositions, Poly3(self.measurement_model_coeffs),
+                          self.var_z, Poly5(self.measurement_weight_model_coeffs), self.max_selection, self.debug)
         self.publisher = rospy.Publisher(self.frame, PointStamped, queue_size=10)
 
     def extractParams(self):
@@ -31,7 +30,8 @@ class LocalizationNode(object):
         self.var_z = rospy.get_param("/localization_node/var_z")
         self.debug = rospy.get_param("/localization_node/debug")
         self.max_selection = rospy.get_param("/localization_node/max_selection")
-        self.model_function = rospy.get_param("/localization_node/function_model")
+        self.measurement_model_coeffs = rospy.get_param("/localization_node/measurement_model")
+        self.measurement_weight_model_coeffs = rospy.get_param("/localization_node/measurement_weight_model")
         stations = rospy.get_param("/localization_node/basestations")
         self.buildBasestation(stations)
 
@@ -41,29 +41,11 @@ class LocalizationNode(object):
 
     def localizationLoop(self):
         while not rospy.is_shutdown():
-            try:
-                if self.miss_counter >= 2:  # after two misses it is assumed the target is not in range
-                    self.rate = rospy.Rate(LocalizationNode.EVERY_MINUTE)  # once in a minute
-                    position = self.ekf.setInitialPositionToCloserBasestation()
-                else:
-                    position = self.ekf.pollingLoop()
-
-                self.publishPosition(position)
-                self.rate = rospy.Rate(LocalizationNode.EVERY_SECOND)  # normal rate
-                self.miss_counter = 0
-
-            except NoMeasurementException:  # no measurements means the target is not in range
-                self.miss_counter += 1
-
+            self.ekf.pollingLoop()
+            self.publishBasestationPosition()
             self.rate.sleep()
 
-    def publishPosition(self, position):
-        msg = PointStamped()
-        msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = self.frame
-
-        msg.point = Point(position[0], position[1], 0)
-        self.publisher.publish(msg)
+    def publishBasestationPosition(self):
         for basestation in self.basestations:
             basestation.publishPosition()
 
