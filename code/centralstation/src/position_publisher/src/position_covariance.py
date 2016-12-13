@@ -3,13 +3,12 @@ import rospy
 from visualization_msgs.msg import Marker
 
 
-class CircumferencePublisher(object):
+class CovariancePublisher(object):
 
-    def __init__(self, model, tag_color):
-        self.model = model
-        self.tag_color = tag_color
+    def __init__(self):
+        self.tag_color = {2022:[0,0,1, 0.5]}
         self.shape = Marker.SPHERE
-        self.frame = '/measurement_debug'
+        self.frame = '/position_debug'
         self.publisher = rospy.Publisher(self.frame, Marker, queue_size=10)
 
     def setPosition(self, marker, position):
@@ -21,10 +20,9 @@ class CircumferencePublisher(object):
         marker.pose.orientation.z = 0.0
         marker.pose.orientation.w = 0.0
 
-    def setRadius(self, marker, measurement):
-        radius = self.model.value(measurement)
-        marker.scale.x = radius
-        marker.scale.y = radius
+    def setRadius(self, marker, rx, ry):
+        marker.scale.x = rx
+        marker.scale.y = ry
         marker.scale.z = 0.001
 
     def setColor(self, marker, tag):
@@ -33,7 +31,7 @@ class CircumferencePublisher(object):
         marker.color.b = self.tag_color[tag][2]
         marker.color.a = self.tag_color[tag][3]
 
-    def publishShape(self, position, measurement, tag, namespace):
+    def publishShape(self, position, rx, ry, tag, namespace):
         marker = Marker()
         marker.header.frame_id = '/map'
         marker.header.stamp = rospy.Time.now()
@@ -44,7 +42,7 @@ class CircumferencePublisher(object):
         marker.type = self.shape
 
         self.setPosition(marker, position)
-        self.setRadius(marker, measurement)
+        self.setRadius(marker, rx, ry)
         self.setColor(marker, tag)
 
         marker.lifetime = rospy.Duration()
