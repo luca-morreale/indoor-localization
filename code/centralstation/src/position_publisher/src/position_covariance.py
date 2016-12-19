@@ -45,6 +45,6 @@ class CovariancePublisher(object):
         self.setRadius(marker, rx, ry)
         self.setColor(marker, tag)
 
-        marker.lifetime = rospy.Duration()
+        marker.lifetime = rospy.Duration(5)
 
         self.publisher.publish(marker)
