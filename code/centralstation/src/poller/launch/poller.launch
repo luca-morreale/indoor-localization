@@ -3,7 +3,7 @@
   <!-- Run localization node -->
   <node name="poller_node" pkg="poller" type="poller_node.py" output="screen">
     <rosparam param="basestations">
-        ['192.168.1.11', '192.168.1.14', '192.168.1.17', '192.168.1.18', '192.168.1.19', '192.168.1.20']
+        ['192.168.1.11', '192.168.1.14', '192.168.1.16', '192.168.1.17', '192.168.1.18', '192.168.1.19', '192.168.1.20']
     </rosparam>
     <rosparam param="debug">True</rosparam>
   </node>

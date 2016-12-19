@@ -3,16 +3,26 @@
   <!-- Run localization node -->
   <node name="localization_node" pkg="position_publisher" type="localization_node.py" output="screen">
     <rosparam param="tag">2022</rosparam>
-    <rosparam param="var_z">2</rosparam>
-    <rosparam param="measurement_model">[-0.1416, 2.311, -14.76, 36.79]</rosparam>
-    <rosparam param="measurement_weight_model">[-2.297e-07, 2.514e-05, -0.001111, 0.02593, -0.3751, 4.237]</rosparam>
+    <rosparam param="var_z">4</rosparam>
+    <rosparam param="measurement_model">
+        [-0.1416, 2.311, -14.76, 36.79]
+    </rosparam>
+    <!-- [-1.137e-07, 1.386e-05, -0.0006467, 0.01496, -0.1979, 2.497] model with 2.5 -->
+    <!-- [-2.297e-07, 2.514e-05, -0.001111, 0.02593, -0.3751, 4.237] model with 4.5 -->
+    <rosparam param="measurement_weight_model">
+        [-1.137e-07, 1.386e-05, -0.0006467, 0.01496, -0.1979, 2.497]
+    </rosparam>
     <rosparam param="debug">True</rosparam>
     <rosparam param="max_selection">4</rosparam>
     <rosparam param="basestations">
         [
-            ['192.168.1.17', 2.55, -0.89],
-            ['192.168.1.19', 3.70, -0.86],
-            ['192.168.1.20', 3.70, 0.2]
+            ['192.168.1.11', -1.39, 2.28],
+            ['192.168.1.14', -1.4, 6.79],
+            ['192.168.1.16', 2.55, 6.79],
+            ['192.168.1.17', 2.25, 2.59],
+            ['192.168.1.18', 1.75, 5.16],
+            ['192.168.1.19', -1.74, -1.93],
+            ['192.168.1.20', 2.25, -1.13]
         ]
     </rosparam>
   </node>
