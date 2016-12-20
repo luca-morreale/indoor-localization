@@ -46,11 +46,15 @@ class EKF(object):
             dt              distance from last update.
     '''
     def ekfIteration(self, measurement, id_station, dt):
-        self.createMatrixes(dt.to_sec(), measurement)
-        measurements = np.zeros(self.sensor_size)
-        measurements[id_station] = measurement - self.measurement_weight.value(measurement)
+        self.createMatrixes(dt, measurement)
+        measurements = self.create_measurements_list(id_station, measurement)
         H, h, estimated_cov_matrix = self.prediction(measurements)
         self.correction(H, h, measurements, estimated_cov_matrix)
+
+    def create_measurements_list(self, id_station, measurement):
+        measurements = np.zeros(self.sensor_size)
+        measurements[id_station] = measurement - self.measurement_weight.value(measurement)
+        return measurements
 
     ''' Predicts the possible next state given the measurements.
         ARGS:
@@ -64,11 +68,12 @@ class EKF(object):
         self.estimated_position = multiply(self.F, self.estimated_position)
         estimated_cov_matrix = multiply(self.F, self.cov_matrix, transpose(self.F)) + self.Q
 
-        h = np.zeros(self.sensor_size)
-        for i in range(0, self.sensor_size):
-            if measurements[i] != 0:
-                h[i] = self.model.value(self.estimated_position[0:2] - self.basestations[i].position)
+        h = self.create_estimated_measure_matrix(measurements)
+        H = self.create_derivate_measure_matrix(measurements)
 
+        return H, h, estimated_cov_matrix
+
+    def create_derivate_measure_matrix(self, measurements):
         H = np.empty((0, 4))
         for i in range(0, len(measurements)):
             if measurements[i] != 0:
@@ -76,8 +81,14 @@ class EKF(object):
             else:
                 dh_dx, dh_dy = 0.0, 0.0
             H = np.append(H, np.array([[dh_dx, dh_dy, 0.0, 0.0]]), axis=0)
+        return H
 
-        return H, h, estimated_cov_matrix
+    def create_estimated_measure_matrix(self, measurements):
+        h = np.zeros(self.sensor_size)
+        for i in range(0, self.sensor_size):
+            if measurements[i] != 0:
+                h[i] = self.model.value(self.estimated_position[0:2] - self.basestations[i].position)
+        return h
 
     ''' Performs a correction step of the position (and associated covariance matrix) given the parameters.
         ARGS:
