@@ -3,7 +3,7 @@
   <!-- Run localization node -->
   <node name="localization_node" pkg="position_publisher" type="localization_node.py" output="screen">
     <rosparam param="tag">2022</rosparam>
-    <rosparam param="var_z">4</rosparam>
+    <rosparam param="var_z">5</rosparam>
     <rosparam param="measurement_model">
         [-0.1416, 2.311, -14.76, 36.79]
     </rosparam>
@@ -20,9 +20,7 @@
             ['192.168.1.14', -1.4, 6.79],
             ['192.168.1.16', 2.55, 6.79],
             ['192.168.1.17', 2.25, 2.59],
-            ['192.168.1.18', 1.75, 5.16],
-            ['192.168.1.19', -1.74, -1.93],
-            ['192.168.1.20', 2.25, -1.13]
+            ['192.168.1.19', -1.74, -1.93]
         ]
     </rosparam>
   </node>
