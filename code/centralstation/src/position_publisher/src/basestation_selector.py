@@ -2,7 +2,7 @@
 import numpy as np
 from matrix_operations import transpose, invert, multiply
 
-def selectBestPositions(sensors, estimated_cov_matrix, estimated_position, size):
+def selectBestPositions(sensors, estimated_cov_matrix, estimated_position, size=-1):
     sensor_size = len(sensors)
     size = sensor_size if size < 0 else size
     inv_estimated_cov_matrix = invert(estimated_cov_matrix)
