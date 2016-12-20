@@ -69,7 +69,7 @@ class ROSEKF(EKF):
         if self.containsUsefulMeasurement(msg.data, msg.basestation):
             id_station = self.indexOf(msg.basestation)
             data = self.getMeasurementFromList(msg.data)
-            self.updatePosition(data, id_station, rospy.Time.now())
+            self.updatePosition(data, id_station, rospy.Time.now().secs)
             self.debug_msg('contains usefull: ' + str(data))
             self.publishPosition()
 
@@ -129,6 +129,8 @@ class ROSEKF(EKF):
     '''
     def pollingLoop(self):
         indexes = self.basestation_selector(self.basestations, self.cov_matrix, self.estimated_position, self.max_station_selection)
+        if len(indexes) == 0:
+            indexes = range(0, self.sensor_size)
+
         for i in indexes:
             self.measurement_requester.publish(self.basestations[i].address)
-        return self.estimated_position
