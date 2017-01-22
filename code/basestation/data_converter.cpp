@@ -78,7 +78,7 @@ Json::Value DataConverter::parse(std::string str)
         
         skipForward(next);
 
-        beacon["rssid"] = getValue(next);
+        beacon["rssi"] = getValue(next);
         next++;
 
         vector.append(beacon);

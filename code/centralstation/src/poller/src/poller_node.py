@@ -79,7 +79,7 @@ class Poller(object):
     def generateMeasurement(self, element):
         tmp = Measurement()
         tmp.tag = element['id_tag'].encode('utf-8')
-        tmp.measurement = int(element['rssid'])
+        tmp.measurement = int(element['rssi'])
         return tmp
 
 

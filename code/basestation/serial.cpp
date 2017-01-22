@@ -19,7 +19,7 @@
 using namespace std;
 
 void fillRSSIValues(int sd, vector<int> &values);
-double averageRSSID(vector<int> &nums);
+double averageRSSI(vector<int> &nums);
 int majorityElement(vector<int> &nums);
 
 int main()
@@ -38,7 +38,7 @@ int main()
     for(int i = 0; i <ITERATIONS; i++) {
         cout << "value-" << i << ": " << values[i] << endl;
     }
-    cout << "average: " << averageRSSID(values) << endl;
+    cout << "average: " << averageRSSI(values) << endl;
     cout << "majority element:" << majorityElement(values) << endl;
     
     return 0;
@@ -60,11 +60,11 @@ void fillRSSIValues(int sd, vector<int> &values)
 
         Json::Value root = basestation::DataConverter::extractJson(measure);
 
-        values[i] = root["beacons"][0]["rssid"].asInt();
+        values[i] = root["beacons"][0]["rssi"].asInt();
     }
 }
 
-double averageRSSID(vector<int> &nums)
+double averageRSSI(vector<int> &nums)
 {
     int sum = 0;
     for (int n : nums) {

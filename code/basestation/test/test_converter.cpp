@@ -29,14 +29,14 @@ BOOST_AUTO_TEST_CASE(well_formed)
 
 	Json::Value beacon;
 	beacon["id_tag"] = "2022";
-	beacon["rssid"] = "27";
+	beacon["rssi"] = "27";
 	vector.append(beacon);
 	root["beacons"] = vector;
 
 	BOOST_CHECK_EQUAL(root, basestation::DataConverter::extractJson("FOUND,2022,1,27\nDONE"));
 
 	beacon["id_tag"] = "2022";
-	beacon["rssid"] = "25";
+	beacon["rssi"] = "25";
 	vector.append(beacon);
 	root["beacons"] = vector;
 
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(extraction)
 
 	Json::Value beacon;
 	beacon["id_tag"] = "2022";
-	beacon["rssid"] = "27";
+	beacon["rssi"] = "27";
 	vector.append(beacon);
 	root["beacons"] = vector;
 
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(extraction)
 
 	BOOST_CHECK_EQUAL(root["beacons"], result["beacons"]);
 
-	BOOST_CHECK_EQUAL(root["beacons"][0]["rssid"], result["beacons"][0]["rssid"]);
+	BOOST_CHECK_EQUAL(root["beacons"][0]["rssi"], result["beacons"][0]["rssi"]);
 
 
 
