@@ -72,7 +72,7 @@ Sperimentalmente \'e stata anche ottenuta una curva che rappresenta la relazione
 Come precedentemente detto le station contengono un \textbf{Raspberry Pi}; su tale dispositivo \'e stato installato un sistema Linux, Raspbian. Tale sistema pu\`o essere sostituito con qualsiasi altro, purch\'e sia possibile installare i pacchetti indicati di seguito.
 
 Le station fungono da server per il servizio di localizzazione; esse agiscono come agenti passivi effettuando una misurazione solo se richiesto da un client.
-Questa richiesta \'e effettuata mediante il collegamento da parte di un client tramite socket (porta 9111). Non \'e necessario lo scambio di nessuna informazione o chiave; a tal riguardo si sottolinea che non \'e stato considerato nessun aspetto riguardo la sicurezza della comunicazione.
+Questa richiesta \'e effettuata mediante il collegamento da parte di un client tramite socket (porta 10019). Non \'e necessario lo scambio di nessuna informazione o chiave; a tal riguardo si sottolinea che non \'e stato considerato nessun aspetto riguardo la sicurezza della comunicazione.
 
 La misurazione richiesta, che come detto richiede \textit{400ms}, viene eseguita inviando tramite seriale il comando \textit{SCANA}.
 Questo comando, assieme ad altri, \'e reso disponibile dai produttori al fine di interagire con l'antenna. Esso permette di eseguire una scansione restituendo un valore per tutti i target a portata.
@@ -217,8 +217,8 @@ Il messaggio inviato sar\`a del tipo '\textit{MeasurementList}' e conterr\`a i s
 
 \begin{itemize}
 	\item Header header $\,\to\,$ contente le informazioni di base;
-	\item string basestation $\,\to\,$ contenete l'indirizzo della station da cui arrivano le misurazioni;
-	\item Measurement[ ] $\,\to\,$ data contente tutte i dati ottenuti dalla misurazione.
+	\item string basestation $\,\to\,$ contente l'indirizzo della station da cui arrivano le misurazioni;
+	\item Measurement[ ] data $\,\to\,$ contente tutti i dati ottenuti dalla misurazione.
 \end{itemize}
 
 Analogamente il sotto-messaggio Measurement \'e composto come segue:
@@ -280,11 +280,16 @@ Infine per mostrare i Marker di debug \'e necessario aggiungere due elementi \te
 Il primo riguarder\`a la posizione e dovr\`a essere impostato sul topic '\textit{/position\_debub}', mentre il secondo su '\textit{/measurement\_debub}'.
 Si fa notare che in entrambi i casi i Marker svaniranno dopo 5 secondi; affinch\'e permangano \`e necessario un respawn continuo.
 
+\section{Note Finali}
+Qui di seguito si fanno notare alcuni punti che potrebbero non esser completamente chiari dai passaggi precedenti.
 
+\begin{itemize}
+	\item Le station si collegano automaticamente alla rete e lanciano il server non grazie al software sviluppato ma alle impostazioni che sono state utilizzate.
+	\item Al fine di far lavorare il filtro correttamente si consiglia di non iniziare a tracciare il target quando esso è molto vicino ad una station poichè causerebbe un errore, matematico, nel software.  L'errore a cui ci si riferisce è dovuto alla differenza pari a zero tra la posizione predetta e quella stimata.
+\end{itemize}
 
-%% aggiungere qualche immagine del 'prodotto finito'
-
-
+% section  (end)
+\newpage
 
 \section{References}
 \begin{itemize}
